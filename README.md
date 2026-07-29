@@ -89,23 +89,25 @@ All backend routes are served under /api.
 
 ## Local Setup
 
-### 1. Clone and enter project
+### 1. Clone and enter the project
 
 ```bash
 git clone <your-repo-url>
-cd hobbyboard
+cd HobbyBoard
 ```
 
 ### 2. Backend setup
 
+Create and activate a virtual environment, then install the Python packages:
+
 ```bash
 cd server
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
-Create a .env file in server/:
+Create a `.env` file inside `server/` with:
 
 ```env
 SECRET_KEY=dev-secret-key
@@ -113,60 +115,90 @@ JWT_SECRET_KEY=dev-jwt-secret-key
 DATABASE_URL=sqlite:///hobbyboard.db
 ```
 
-Run migrations and start API:
+With the virtual environment still activated, run the database migration:
 
 ```bash
-flask --app run.py db upgrade
-python run.py
+python3 -m flask --app run.py db upgrade
 ```
 
-Backend runs at http://127.0.0.1:5000
+Start the backend server:
+
+```bash
+python3 run.py
+```
+
+Backend runs at `http://127.0.0.1:5000`
 
 ### 3. Frontend setup
 
+Open a second terminal from the project root and run:
+
 ```bash
-cd ../client
+cd HobbyBoard/client
 npm install
 npm run dev
 ```
 
-Frontend runs at http://127.0.0.1:5173
+Frontend runs at `http://127.0.0.1:5173`
+
+### After first-time setup
+
+If you already cloned the repo, created the virtual environment, and installed dependencies, you do not need to repeat the full setup.
+
+Use these shorter commands instead.
+
+Terminal 1: backend
+
+```bash
+cd HobbyBoard/server
+source venv/bin/activate
+python3 -m flask --app run.py db upgrade
+python3 run.py
+```
+
+Terminal 2: frontend
+
+```bash
+cd HobbyBoard/client
+npm run dev
+```
+
+### Copy-paste run flow
+
+If you want the exact startup flow from a fresh clone on macOS or Linux, use these two terminals.
+
+Terminal 1: backend
+
+```bash
+git clone <your-repo-url>
+cd HobbyBoard/server
+python3 -m venv venv
+source venv/bin/activate
+python3 -m pip install -r requirements.txt
+cat > .env <<'EOF'
+SECRET_KEY=dev-secret-key
+JWT_SECRET_KEY=dev-jwt-secret-key
+DATABASE_URL=sqlite:///hobbyboard.db
+EOF
+python3 -m flask --app run.py db upgrade
+python3 run.py
+```
+
+Terminal 2: frontend
+
+```bash
+cd HobbyBoard/client
+npm install
+npm run dev
+```
 
 Note: client/src/services/api.js currently points to http://127.0.0.1:5000/api.
 
-## Submission Checklist
+### Troubleshooting
 
-- Public GitHub repository with complete code
-- Clean commit history showing progress
-- Proper .gitignore configuration
-- README with setup + feature documentation
-- Optional deployed links (Render/Netlify/etc.)
-
-## Demo Script (2-3 Minutes)
-
-1. Problem and audience
-- "Hobby projects get scattered across notes, messages, and memory. HobbyBoard gives makers one place to organize boards and tasks."
-
-2. Quick architecture
-- "This app uses React on the frontend and Flask + SQLAlchemy on the backend, with JWT authentication and ownership-based authorization."
-
-3. Auth flow
-- Create a user (or log in), then show that dashboard data is user-specific.
-
-4. Board CRUD
-- Create a new board, edit it, and delete one board to show full CRUD.
-
-5. Task CRUD inside a board
-- Open a board, add tasks, change status/priority, edit a task, and delete a task.
-
-6. Project updates
-- Post a few milestone updates from a board and delete one to show the lightweight progress feed.
-
-7. Ownership/security callout
-- "All board/task routes are protected. Users can only read and modify their own records."
-
-8. Wrap-up
-- "HobbyBoard makes large hobby projects less overwhelming by turning ideas into trackable steps."
+- If `python` points to Python 2 or is missing packages, use `python3` exactly as shown above.
+- If `flask --app run.py db upgrade` does not work, use `python3 -m flask --app run.py db upgrade`.
+- Keep the backend running in `server/` and the frontend running in `client/` in separate terminals.
 
 ## Future Enhancements
 

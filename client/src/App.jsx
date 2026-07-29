@@ -10,7 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <>
+    <div className="app-shell">
       <Navbar />
 
       <main className="app-container">
@@ -36,7 +36,13 @@ function App() {
             />
         </Routes>
       </main>
-    </>
+
+      <footer className="site-footer" aria-label="Site footer">
+        <p className="site-footer-text">
+          Copyright {"\u00A9"} 2026 James Mounts. All rights reserved.
+        </p>
+      </footer>
+    </div>
   );
 }
 

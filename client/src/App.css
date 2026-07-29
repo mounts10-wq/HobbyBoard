@@ -26,6 +26,12 @@ body {
   line-height: 1.55;
 }
 
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 h1,
 h2,
 h3,
@@ -37,6 +43,23 @@ p {
   max-width: 1120px;
   margin: 0 auto;
   padding: 2rem 1.25rem 2.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.site-footer {
+  border-top: 1px solid rgba(58, 44, 35, 0.2);
+  padding: 0.95rem 1rem 1.2rem;
+  text-align: center;
+  background: rgba(255, 252, 248, 0.62);
+}
+
+.site-footer-text {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-soft);
+  letter-spacing: 0.02em;
 }
 
 .navbar {

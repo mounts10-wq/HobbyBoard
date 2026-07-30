@@ -14,6 +14,9 @@ from .models import User, Board, Task, BoardUpdate
 
 api = Blueprint("api", __name__)
 
+ALLOWED_TASK_STATUSES = {"Not Started", "In Progress", "Complete"}
+ALLOWED_TASK_PRIORITIES = {"Low", "Medium", "High"}
+
 
 def build_local_plan_suggestions(title, description, materials, notes):
     context = " ".join([title, description, materials, notes]).lower()
@@ -451,15 +454,27 @@ def create_task(board_id):
     if not board:
         return jsonify({"error": "Board not found"}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    title = data.get("title", "").strip()
-    description = data.get("description", "").strip()
-    status = data.get("status", "Not Started").strip()
-    priority = data.get("priority", "Medium").strip()
+    title = str(data.get("title", "")).strip()
+    description = str(data.get("description", "")).strip()
+    status = str(data.get("status", "Not Started")).strip()
+    priority = str(data.get("priority", "Medium")).strip()
 
     if not title:
         return jsonify({"error": "Task title is required"}), 400
+
+    if status not in ALLOWED_TASK_STATUSES:
+        return jsonify({
+            "error": "Invalid task status",
+            "allowed_values": sorted(ALLOWED_TASK_STATUSES)
+        }), 400
+
+    if priority not in ALLOWED_TASK_PRIORITIES:
+        return jsonify({
+            "error": "Invalid task priority",
+            "allowed_values": sorted(ALLOWED_TASK_PRIORITIES)
+        }), 400
 
     task = Task(
         title=title,
@@ -507,22 +522,34 @@ def update_task(task_id):
     if not task:
         return jsonify({"error": "Task not found"}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     if "title" in data:
-        title = data.get("title", "").strip()
+        title = str(data.get("title", "")).strip()
         if not title:
             return jsonify({"error": "Task title cannot be empty"}), 400
         task.title = title
 
     if "description" in data:
-        task.description = data.get("description", "").strip()
+        task.description = str(data.get("description", "")).strip()
 
     if "status" in data:
-        task.status = data.get("status", "").strip()
+        status = str(data.get("status", "")).strip()
+        if status not in ALLOWED_TASK_STATUSES:
+            return jsonify({
+                "error": "Invalid task status",
+                "allowed_values": sorted(ALLOWED_TASK_STATUSES)
+            }), 400
+        task.status = status
 
     if "priority" in data:
-        task.priority = data.get("priority", "").strip()
+        priority = str(data.get("priority", "")).strip()
+        if priority not in ALLOWED_TASK_PRIORITIES:
+            return jsonify({
+                "error": "Invalid task priority",
+                "allowed_values": sorted(ALLOWED_TASK_PRIORITIES)
+            }), 400
+        task.priority = priority
 
     db.session.commit()
 

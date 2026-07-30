@@ -10,8 +10,13 @@ function TaskForm({ onCreateTask }) {
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
 
   function handleChange(event) {
+    if (success) {
+      setSuccess("");
+    }
+
     setFormData({
       ...formData,
       [event.target.name]: event.target.value,
@@ -21,6 +26,7 @@ function TaskForm({ onCreateTask }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setSuccess("");
 
     if (!formData.title.trim()) {
       setError("Task title is required.");
@@ -38,6 +44,7 @@ function TaskForm({ onCreateTask }) {
         status: "Not Started",
         priority: "Medium",
       });
+      setSuccess("Task added successfully.");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -93,6 +100,7 @@ function TaskForm({ onCreateTask }) {
       </label>
 
       {error && <p className="error-message">{error}</p>}
+      {success && <p className="success-message">{success}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? "Adding..." : "Add Task"}

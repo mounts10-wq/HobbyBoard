@@ -11,8 +11,13 @@ function BoardForm({ onCreateBoard }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   function handleChange(event) {
+    if (success) {
+      setSuccess("");
+    }
+
     setFormData({
       ...formData,
       [event.target.name]: event.target.value,
@@ -22,6 +27,7 @@ function BoardForm({ onCreateBoard }) {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+    setSuccess("");
 
     if (!formData.title.trim() || !formData.hobby_type.trim()) {
       setError("Title and hobby type are required.");
@@ -40,6 +46,7 @@ function BoardForm({ onCreateBoard }) {
         materials: "",
         notes: "",
       });
+      setSuccess("Board created. You can add tasks from the board details page.");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -104,6 +111,7 @@ function BoardForm({ onCreateBoard }) {
       </label>
 
       {error && <p className="error-message">{error}</p>}
+      {success && <p className="success-message">{success}</p>}
 
       <button type="submit" disabled={loading}>
         {loading ? "Creating..." : "Create Board"}

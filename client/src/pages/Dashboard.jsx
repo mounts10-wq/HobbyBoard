@@ -11,6 +11,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statsLoading, setStatsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notice, setNotice] = useState("");
   const [stats, setStats] = useState({
     board_count: 0,
     task_count: 0,
@@ -25,6 +27,16 @@ function Dashboard() {
     fetchBoards();
     fetchStats();
   }, []);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    setNotice("");
+
+    await Promise.all([fetchBoards(), fetchStats()]);
+
+    setNotice("Dashboard refreshed.");
+    setIsRefreshing(false);
+  }
 
   async function fetchBoards() {
     setLoading(true);
@@ -61,16 +73,18 @@ function Dashboard() {
     }
   }
    
-   async function handleUpdateBoard(boardId, updates) {
-     const data = await apiRequest(`/boards/${boardId}`, {
-       method: "PATCH",
-       body: JSON.stringify(updates),
+  async function handleUpdateBoard(boardId, updates) {
+    const data = await apiRequest(`/boards/${boardId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
     });
 
     setBoards(
-       boards.map((board) => (board.id === boardId ? data.board : board))
+      boards.map((board) => (board.id === boardId ? data.board : board))
     );
-   }
+    setNotice("Board updated successfully.");
+  }
+
   async function handleCreateBoard(formData) {
     const data = await apiRequest("/boards", {
       method: "POST",
@@ -79,6 +93,7 @@ function Dashboard() {
 
     setBoards([data.board, ...boards]);
     fetchStats();
+    setNotice("Board created successfully.");
   }
 
   async function handleDeleteBoard(boardId) {
@@ -97,6 +112,7 @@ function Dashboard() {
 
       setBoards(boards.filter((board) => board.id !== boardId));
       fetchStats();
+      setNotice("Board deleted.");
     } catch (err) {
       setError(err.message);
     }
@@ -114,9 +130,19 @@ function Dashboard() {
       <section className="insights-panel">
         <div className="insights-header">
           <h2>Progress Snapshot</h2>
-          {!statsLoading && (
-            <span className="count-pill">{stats.completion_rate}% complete</span>
-          )}
+          <div className="insights-actions">
+            {!statsLoading && (
+              <span className="count-pill">{stats.completion_rate}% complete</span>
+            )}
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
         </div>
 
         {statsLoading ? (
@@ -162,6 +188,7 @@ function Dashboard() {
 
       <BoardForm onCreateBoard={handleCreateBoard} />
 
+      {notice && <p className="success-message">{notice}</p>}
       {loading && <p className="loading-message">Loading boards...</p>}
       {error && <p className="error-message">{error}</p>}
 

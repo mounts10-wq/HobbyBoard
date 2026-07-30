@@ -216,6 +216,10 @@ p {
 .loading-message,
 .empty-state {
   animation: fade-slide-up 360ms ease-out both;
+}
+
+.loading-message,
+.empty-state {
   padding: 1.15rem 1.2rem;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
@@ -357,6 +361,15 @@ p {
   padding: 0.55rem 0.65rem;
 }
 
+.success-message {
+  color: var(--success-strong);
+  font-weight: 700;
+  background: #e8f7ef;
+  border: 1px solid #bfe6cf;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -388,6 +401,17 @@ p {
   justify-content: space-between;
   gap: 0.8rem;
   margin-bottom: 0.7rem;
+}
+
+.insights-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.insights-actions .secondary-button {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.84rem;
 }
 
 .insights-header h2 {

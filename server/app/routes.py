@@ -1,3 +1,7 @@
+import json
+import os
+import re
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
@@ -9,6 +13,36 @@ from . import db
 from .models import User, Board, Task, BoardUpdate
 
 api = Blueprint("api", __name__)
+
+
+def build_local_plan_suggestions(title, description, materials, notes):
+    context = " ".join([title, description, materials, notes]).lower()
+    title_label = title or "this project"
+    suggestions = []
+
+    if any(keyword in context for keyword in ["build", "make", "repair", "restore", "create", "assemble"]):
+        suggestions.append(f"Break {title_label} into one small milestone you can finish this week.")
+    elif any(keyword in context for keyword in ["learn", "study", "practice", "read", "research"]):
+        suggestions.append(f"Create a short study sequence for {title_label} so progress stays steady.")
+    else:
+        suggestions.append(f"Start with one concrete first step for {title_label}.")
+
+    if materials:
+        suggestions.append(f"Use your materials as a prep checklist: {materials}.")
+    else:
+        suggestions.append("Add a few materials so the assistant can suggest a better prep plan.")
+
+    if notes:
+        suggestions.append(f"Turn your note into a specific next action: {notes}")
+    else:
+        suggestions.append("Write one short note about your next step so the plan feels more real.")
+
+    if any(keyword in context for keyword in ["week", "month", "timeline", "schedule", "deadline"]):
+        suggestions.append("Set a simple checkpoint date to keep momentum going.")
+    else:
+        suggestions.append("Pick a target date so the plan feels easier to follow.")
+
+    return suggestions[:4]
 
 
 @api.route("/health", methods=["GET"])
@@ -246,6 +280,71 @@ def delete_board(board_id):
     db.session.commit()
 
     return jsonify({"message": "Board deleted successfully"}), 200
+
+
+@api.route("/assistant/plan", methods=["POST"])
+def generate_plan_suggestions():
+    data = request.get_json() or {}
+    title = str(data.get("title", "")).strip()
+    description = str(data.get("description", "")).strip()
+    materials = str(data.get("materials", "")).strip()
+    notes = str(data.get("notes", "")).strip()
+
+    prompt = f"You are a hobby project planning assistant. Create 4 helpful suggestions for a project called '{title or 'a new hobby project'}'."
+
+    if description:
+        prompt += f" The project description is: {description}."
+    if materials:
+        prompt += f" The materials mentioned are: {materials}."
+    if notes:
+        prompt += f" The planning notes are: {notes}."
+
+    prompt += " Return the response as a JSON array of short strings."
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        return jsonify({"suggestions": fallback}), 200
+
+    try:
+        import requests
+
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-3-5-sonnet-latest",
+                "max_tokens": 400,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=20,
+        )
+
+        response.raise_for_status()
+        payload = response.json()
+        content = payload.get("content", [])
+        text = ""
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    text += item.get("text", "")
+
+        if not text:
+            raise ValueError("No text returned from AI service")
+
+        cleaned = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', text)
+        suggestions = cleaned or [line.strip(" -\n") for line in text.splitlines() if line.strip()]
+        if not suggestions:
+            raise ValueError("No suggestions parsed")
+
+        return jsonify({"suggestions": suggestions[:4]}), 200
+    except Exception:
+        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        return jsonify({"suggestions": fallback}), 200
 
 
 @api.route("/boards/<int:board_id>/updates", methods=["GET"])

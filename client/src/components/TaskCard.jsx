@@ -128,13 +128,15 @@ function TaskCard({ task, onUpdateTask, onDeleteTask }) {
   return (
     <article className="task-card">
       <div>
-        <h3>{task.title}</h3>
+        <div className="board-card-heading">
+          <h3>{task.title}</h3>
+          <span className={`task-badge ${priorityClassMap[task.priority] || "priority-medium"}`}>
+            {task.priority} Priority
+          </span>
+        </div>
         <div className="task-meta">
           <span className={`task-badge ${statusClassMap[task.status] || "status-not-started"}`}>
             {task.status}
-          </span>
-          <span className={`task-badge ${priorityClassMap[task.priority] || "priority-medium"}`}>
-            {task.priority} Priority
           </span>
         </div>
         <p>{task.description || "No description added."}</p>

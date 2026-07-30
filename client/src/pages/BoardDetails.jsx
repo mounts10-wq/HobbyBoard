@@ -4,6 +4,7 @@ import { apiRequest } from "../services/api";
 import TaskForm from "../components/TaskForm";
 import TaskCard from "../components/TaskCard";
 import BoardUpdates from "../components/BoardUpdates";
+import PlanningAssistant from "../components/PlanningAssistant";
 
 function BoardDetails() {
   const { boardId } = useParams();
@@ -12,6 +13,32 @@ function BoardDetails() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const completedCount = tasks.filter((task) => task.status === "Complete").length;
+  const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+  const nextAction = (() => {
+    if (!tasks.length) {
+      return "Start by adding your first task so the board has a clear next step.";
+    }
+
+    const notStarted = tasks.find((task) => task.status === "Not Started");
+    const inProgress = tasks.find((task) => task.status === "In Progress");
+
+    if (progressPercent === 100) {
+      return "Everything looks wrapped up here. Consider sharing a milestone update or adding one final polish task.";
+    }
+
+    if (notStarted) {
+      return `Focus on "${notStarted.title}" first — it is still waiting to begin.`;
+    }
+
+    if (inProgress) {
+      return `Keep momentum on "${inProgress.title}" and move it closer to completion.`;
+    }
+
+    return "Pick the most important task and make a quick move on it to keep progress steady.";
+  })();
 
   useEffect(() => {
     fetchBoard();
@@ -101,7 +128,16 @@ function BoardDetails() {
       </div>
 
       <section className="planning-section">
-        <h2>Planning Notes</h2>
+        <div className="task-section-header">
+          <h2>Planning Notes</h2>
+          <span className="count-pill">{progressPercent}% done</span>
+        </div>
+
+        <div className="next-action-card">
+          <h3>Suggested next step</h3>
+          <p>{nextAction}</p>
+        </div>
+
         <div className="planning-grid">
           <div className="planning-card">
             <h3>Materials</h3>
@@ -113,6 +149,8 @@ function BoardDetails() {
           </div>
         </div>
       </section>
+
+      <PlanningAssistant board={board} />
 
       <BoardUpdates boardId={boardId} />
 

@@ -118,8 +118,10 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
   return (
     <article className="board-card">
       <div>
-        <h3>{board.title}</h3>
-        <p className="board-type">{board.hobby_type}</p>
+        <div className="board-card-heading">
+          <h3>{board.title}</h3>
+          <span className="board-type">{board.hobby_type}</span>
+        </div>
         {hobbyTags.length > 0 && (
           <div className="hobby-tag-row">
             {hobbyTags.map((tag) => (

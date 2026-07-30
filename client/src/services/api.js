@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://127.0.0.1:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000/api";
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("token");
@@ -12,16 +12,35 @@ export async function apiRequest(endpoint, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    let data = null;
 
-  if (!response.ok) {
-    throw new Error(data.error || "Something went wrong");
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = { message: await response.text() };
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || data.message || "Something went wrong");
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Failed to fetch")) {
+      throw new Error("The server is unavailable. Start the backend and try again.");
+    }
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error("The server is unavailable. Start the backend and try again.");
   }
-
-  return data;
 }

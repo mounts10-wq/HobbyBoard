@@ -79,6 +79,10 @@ function TaskForm({ onCreateTask }) {
         </select>
       </label>
 
+      <div className="task-hint">
+        Tip: use quick status updates on each task card to keep momentum visible.
+      </div>
+
       <label>
         Priority
         <select name="priority" value={formData.priority} onChange={handleChange}>

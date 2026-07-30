@@ -5,7 +5,7 @@ function ProtectedRoute({ children }) {
   const { user, authLoading } = useAuth();
 
   if (authLoading) {
-    return <p>Checking authentication...</p>;
+    return <p className="loading-message">Checking authentication...</p>;
   }
 
   if (!user) {

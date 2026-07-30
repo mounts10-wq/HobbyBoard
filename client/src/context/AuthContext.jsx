@@ -3,8 +3,25 @@ import { apiRequest } from "../services/api";
 
 const AuthContext = createContext();
 
+const USER_STORAGE_KEY = "hobbyboard_user";
+
+function getStoredUser() {
+  const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getStoredUser());
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -19,9 +36,15 @@ export function AuthProvider({ children }) {
       try {
         const data = await apiRequest("/me");
         setUser(data.user);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
       } catch (error) {
-        localStorage.removeItem("token");
-        setUser(null);
+        const authErrorStatuses = [401, 422];
+
+        if (authErrorStatuses.includes(error?.status)) {
+          localStorage.removeItem("token");
+          localStorage.removeItem(USER_STORAGE_KEY);
+          setUser(null);
+        }
       } finally {
         setAuthLoading(false);
       }
@@ -37,6 +60,7 @@ export function AuthProvider({ children }) {
     });
 
     localStorage.setItem("token", data.access_token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
     setUser(data.user);
 
     return data;
@@ -49,6 +73,7 @@ export function AuthProvider({ children }) {
     });
 
     localStorage.setItem("token", data.access_token);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
     setUser(data.user);
 
     return data;
@@ -56,6 +81,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
   }
 

@@ -14,6 +14,8 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
     title: board.title,
     hobby_type: board.hobby_type,
     description: board.description || "",
+    materials: board.materials || "",
+    notes: board.notes || "",
   });
 
   const [error, setError] = useState("");
@@ -75,6 +77,24 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
             />
           </label>
 
+          <label>
+            Materials
+            <textarea
+              name="materials"
+              value={formData.materials}
+              onChange={handleChange}
+            />
+          </label>
+
+          <label>
+            Planning Notes
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+            />
+          </label>
+
           {error && <p className="error-message">{error}</p>}
 
           <div className="board-card-actions">
@@ -110,6 +130,8 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
           </div>
         )}
         <p>{board.description || "No description added yet."}</p>
+        {board.materials && <p className="board-preview">Materials: {board.materials}</p>}
+        {board.notes && <p className="board-preview">Notes: {board.notes}</p>}
       </div>
 
       <div className="board-card-actions">

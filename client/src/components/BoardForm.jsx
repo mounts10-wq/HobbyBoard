@@ -5,6 +5,8 @@ function BoardForm({ onCreateBoard }) {
     title: "",
     hobby_type: "",
     description: "",
+    materials: "",
+    notes: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,8 @@ function BoardForm({ onCreateBoard }) {
         title: "",
         hobby_type: "",
         description: "",
+        materials: "",
+        notes: "",
       });
     } catch (err) {
       setError(err.message);
@@ -75,6 +79,26 @@ function BoardForm({ onCreateBoard }) {
           name="description"
           placeholder="Describe what this board is for..."
           value={formData.description}
+          onChange={handleChange}
+        />
+      </label>
+
+      <label>
+        Materials
+        <textarea
+          name="materials"
+          placeholder="List the supplies, tools, or resources you need..."
+          value={formData.materials}
+          onChange={handleChange}
+        />
+      </label>
+
+      <label>
+        Planning Notes
+        <textarea
+          name="notes"
+          placeholder="Add a quick plan, timeline, or reminders..."
+          value={formData.notes}
           onChange={handleChange}
         />
       </label>

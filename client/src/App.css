@@ -428,7 +428,8 @@ p {
 
 .board-form,
 .task-form,
-.board-detail-header {
+.board-detail-header,
+.planning-section {
   padding: 1.4rem;
   margin-bottom: 1.5rem;
 }
@@ -520,7 +521,9 @@ p {
 
 .board-card p,
 .task-card p,
-.board-detail-header p {
+.board-detail-header p,
+.planning-card p,
+.board-preview {
   color: #5f4f47;
 }
 
@@ -623,6 +626,41 @@ p {
   white-space: pre-wrap;
   color: #5f4f47;
   line-height: 1.6;
+}
+
+.planning-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+}
+
+.planning-section h2 {
+  margin-bottom: 0.85rem;
+}
+
+.planning-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.planning-card {
+  background: var(--surface-soft);
+  border: 1px solid #e2d2c3;
+  border-radius: 10px;
+  padding: 0.95rem;
+}
+
+.planning-card h3 {
+  margin-bottom: 0.35rem;
+  color: var(--brand-strong);
+}
+
+.board-preview {
+  margin-top: 0.45rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .task-section {

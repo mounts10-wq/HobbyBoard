@@ -154,6 +154,8 @@ def create_board():
     title = data.get("title", "").strip()
     hobby_type = data.get("hobby_type", "").strip()
     description = data.get("description", "").strip()
+    materials = data.get("materials", "").strip()
+    notes = data.get("notes", "").strip()
 
     if not title or not hobby_type:
         return jsonify({"error": "Title and hobby type are required"}), 400
@@ -162,6 +164,8 @@ def create_board():
         title=title,
         hobby_type=hobby_type,
         description=description,
+        materials=materials,
+        notes=notes,
         user_id=user_id
     )
 
@@ -213,6 +217,12 @@ def update_board(board_id):
 
     if "description" in data:
         board.description = data.get("description", "").strip()
+
+    if "materials" in data:
+        board.materials = data.get("materials", "").strip()
+
+    if "notes" in data:
+        board.notes = data.get("notes", "").strip()
 
     db.session.commit()
 

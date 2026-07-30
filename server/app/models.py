@@ -43,6 +43,8 @@ class Board(db.Model):
     title = db.Column(db.String(120), nullable=False)
     hobby_type = db.Column(db.String(80), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    materials = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -65,6 +67,8 @@ class Board(db.Model):
             "title": self.title,
             "hobby_type": self.hobby_type,
             "description": self.description,
+            "materials": self.materials,
+            "notes": self.notes,
             "created_at": self.created_at.isoformat(),
             "user_id": self.user_id
         }

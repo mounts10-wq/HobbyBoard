@@ -24,6 +24,9 @@ def create_app():
     jwt.init_app(app)
     from . import models
 
+    with app.app_context():
+        db.create_all()
+
     from .routes import api
     app.register_blueprint(api, url_prefix="/api")
 

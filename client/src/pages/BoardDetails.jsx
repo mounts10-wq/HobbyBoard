@@ -100,6 +100,20 @@ function BoardDetails() {
         <p>{board.description || "No description added yet."}</p>
       </div>
 
+      <section className="planning-section">
+        <h2>Planning Notes</h2>
+        <div className="planning-grid">
+          <div className="planning-card">
+            <h3>Materials</h3>
+            <p>{board.materials || "No materials listed yet."}</p>
+          </div>
+          <div className="planning-card">
+            <h3>Notes</h3>
+            <p>{board.notes || "No planning notes yet."}</p>
+          </div>
+        </div>
+      </section>
+
       <BoardUpdates boardId={boardId} />
 
       <TaskForm onCreateTask={handleCreateTask} />

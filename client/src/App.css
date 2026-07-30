@@ -216,6 +216,16 @@ p {
 .loading-message,
 .empty-state {
   animation: fade-slide-up 360ms ease-out both;
+  padding: 1.15rem 1.2rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 252, 248, 0.72);
+  color: var(--text-soft);
+}
+
+.empty-state h3 {
+  margin-bottom: 0.35rem;
+  color: var(--text);
 }
 
 .form-page {
@@ -232,6 +242,7 @@ p {
 .form-page > p {
   margin-bottom: 1.2rem;
   color: var(--text-soft);
+  line-height: 1.7;
 }
 
 .auth-form,

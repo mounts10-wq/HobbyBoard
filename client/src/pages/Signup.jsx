@@ -39,8 +39,8 @@ function Signup() {
 
   return (
     <section className="form-page">
-      <h1>Create an Account</h1>
-      <p>Sign up to start organizing your projects.</p>
+      <h1>Create your workspace</h1>
+      <p>Sign up to start organizing your projects and ideas in one place.</p>
 
       <form onSubmit={handleSubmit} className="auth-form">
         <label>

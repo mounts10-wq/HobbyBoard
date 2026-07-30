@@ -52,11 +52,11 @@ def health_check():
 
 @api.route("/signup", methods=["POST"])
 def signup():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    username = data.get("username", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
+    username = str(data.get("username", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
 
     if not username or not email or not password:
         return jsonify({"error": "Username, email, and password are required"}), 400
@@ -86,10 +86,10 @@ def signup():
 
 @api.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
 
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -183,13 +183,13 @@ def get_boards():
 @jwt_required()
 def create_board():
     user_id = int(get_jwt_identity())
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    title = data.get("title", "").strip()
-    hobby_type = data.get("hobby_type", "").strip()
-    description = data.get("description", "").strip()
-    materials = data.get("materials", "").strip()
-    notes = data.get("notes", "").strip()
+    title = str(data.get("title", "")).strip()
+    hobby_type = str(data.get("hobby_type", "")).strip()
+    description = str(data.get("description", "")).strip()
+    materials = str(data.get("materials", "")).strip()
+    notes = str(data.get("notes", "")).strip()
 
     if not title or not hobby_type:
         return jsonify({"error": "Title and hobby type are required"}), 400
@@ -235,7 +235,7 @@ def update_board(board_id):
     if not board:
         return jsonify({"error": "Board not found"}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     if "title" in data:
         title = data.get("title", "").strip()
@@ -374,8 +374,8 @@ def create_board_update(board_id):
     if not board:
         return jsonify({"error": "Board not found"}), 404
 
-    data = request.get_json() or {}
-    content = data.get("content", "").strip()
+    data = request.get_json(silent=True) or {}
+    content = str(data.get("content", "")).strip()
 
     if not content:
         return jsonify({"error": "Update content is required"}), 400

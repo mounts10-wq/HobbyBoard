@@ -166,7 +166,10 @@ function Dashboard() {
       {error && <p className="error-message">{error}</p>}
 
       {!loading && boards.length === 0 && (
-        <p className="empty-state">You do not have any boards yet. Create your first one above.</p>
+        <div className="empty-state">
+          <h3>No boards yet</h3>
+          <p>Create your first board above to start planning your next hobby project.</p>
+        </div>
       )}
 
       <div className="board-grid">

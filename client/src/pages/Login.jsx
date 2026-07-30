@@ -38,8 +38,8 @@ function Login() {
 
   return (
     <section className="form-page">
-      <h1>Login</h1>
-      <p>Log in to view your project boards.</p>
+      <h1>Welcome back</h1>
+      <p>Log in to continue tracking your hobby projects.</p>
 
       <form onSubmit={handleSubmit} className="auth-form">
         <label>

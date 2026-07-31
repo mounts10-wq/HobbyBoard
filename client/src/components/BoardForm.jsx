@@ -7,6 +7,7 @@ function BoardForm({ onCreateBoard }) {
     description: "",
     materials: "",
     notes: "",
+    is_public: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ function BoardForm({ onCreateBoard }) {
 
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value,
+      [event.target.name]: event.target.type === "checkbox" ? event.target.checked : event.target.value,
     });
   }
 
@@ -45,6 +46,7 @@ function BoardForm({ onCreateBoard }) {
         description: "",
         materials: "",
         notes: "",
+        is_public: false,
       });
       setSuccess("Board created. You can add tasks from the board details page.");
     } catch (err) {
@@ -108,6 +110,16 @@ function BoardForm({ onCreateBoard }) {
           value={formData.notes}
           onChange={handleChange}
         />
+      </label>
+
+      <label className="checkbox-field">
+        <input
+          type="checkbox"
+          name="is_public"
+          checked={formData.is_public}
+          onChange={handleChange}
+        />
+        Share this board publicly in Community discovery and feed.
       </label>
 
       {error && <p className="error-message">{error}</p>}

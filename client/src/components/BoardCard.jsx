@@ -122,6 +122,9 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
           <h3>{board.title}</h3>
           <span className="board-type">{board.hobby_type}</span>
         </div>
+        <p className={board.is_public ? "visibility-pill public" : "visibility-pill private"}>
+          {board.is_public ? "Public board" : "Private board"}
+        </p>
         {hobbyTags.length > 0 && (
           <div className="hobby-tag-row">
             {hobbyTags.map((tag) => (

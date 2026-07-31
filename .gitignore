@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .env
 server/instance/*.db
+server/instance/backups/
 
 # Node
 client/node_modules/

@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import "./App.css";
 import BoardDetails from "./pages/BoardDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Community from "./pages/Community";
 
 function App() {
   return (
@@ -23,6 +24,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <ProtectedRoute>
+                <Community />
               </ProtectedRoute>
             }
           />

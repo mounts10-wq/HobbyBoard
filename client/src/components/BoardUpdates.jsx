@@ -4,9 +4,13 @@ import { apiRequest } from "../services/api";
 function BoardUpdates({ boardId }) {
   const [updates, setUpdates] = useState([]);
   const [content, setContent] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [commentsByUpdateId, setCommentsByUpdateId] = useState({});
+  const [commentDrafts, setCommentDrafts] = useState({});
+  const [commentLoadingByUpdateId, setCommentLoadingByUpdateId] = useState({});
 
   useEffect(() => {
     fetchUpdates();
@@ -40,11 +44,12 @@ function BoardUpdates({ boardId }) {
     try {
       const data = await apiRequest(`/boards/${boardId}/updates`, {
         method: "POST",
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, media_url: mediaUrl }),
       });
 
       setUpdates([data.update, ...updates]);
       setContent("");
+      setMediaUrl("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,6 +75,50 @@ function BoardUpdates({ boardId }) {
     }
   }
 
+  async function toggleComments(updateId) {
+    if (commentsByUpdateId[updateId]) {
+      setCommentsByUpdateId((current) => {
+        const next = { ...current };
+        delete next[updateId];
+        return next;
+      });
+      return;
+    }
+
+    setCommentLoadingByUpdateId((current) => ({ ...current, [updateId]: true }));
+
+    try {
+      const data = await apiRequest(`/updates/${updateId}/comments`);
+      setCommentsByUpdateId((current) => ({ ...current, [updateId]: data.comments || [] }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCommentLoadingByUpdateId((current) => ({ ...current, [updateId]: false }));
+    }
+  }
+
+  async function handlePostComment(updateId) {
+    const draft = (commentDrafts[updateId] || "").trim();
+    if (!draft) {
+      return;
+    }
+
+    try {
+      const data = await apiRequest(`/updates/${updateId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ content: draft }),
+      });
+
+      setCommentsByUpdateId((current) => ({
+        ...current,
+        [updateId]: [...(current[updateId] || []), data.comment],
+      }));
+      setCommentDrafts((current) => ({ ...current, [updateId]: "" }));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   return (
     <section className="update-section">
       <div className="task-section-header">
@@ -78,6 +127,16 @@ function BoardUpdates({ boardId }) {
       </div>
 
       <form className="update-form" onSubmit={handleSubmit}>
+        <label>
+          Optional media URL
+          <input
+            type="url"
+            value={mediaUrl}
+            onChange={(event) => setMediaUrl(event.target.value)}
+            placeholder="https://youtube.com/... or another media link"
+          />
+        </label>
+
         <label>
           Quick update
           <textarea
@@ -120,6 +179,63 @@ function BoardUpdates({ boardId }) {
               </div>
 
               <p className="update-content">{update.content}</p>
+
+              {update.media_url && (
+                <p className="community-media-link">
+                  Media: <a href={update.media_url} target="_blank" rel="noreferrer">{update.media_url}</a>
+                </p>
+              )}
+
+              <div className="update-comments">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => toggleComments(update.id)}
+                >
+                  {commentsByUpdateId[update.id] ? "Hide comments" : "Show comments"}
+                </button>
+
+                {commentLoadingByUpdateId[update.id] && (
+                  <p className="loading-message">Loading comments...</p>
+                )}
+
+                {commentsByUpdateId[update.id] && (
+                  <div className="update-comment-thread">
+                    {(commentsByUpdateId[update.id] || []).length === 0 ? (
+                      <p className="empty-state">No comments yet. Start the discussion.</p>
+                    ) : (
+                      <ul className="comment-list">
+                        {(commentsByUpdateId[update.id] || []).map((comment) => (
+                          <li key={comment.id}>
+                            <strong>{comment.username || "User"}:</strong> {comment.content}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="comment-input-row">
+                      <input
+                        type="text"
+                        value={commentDrafts[update.id] || ""}
+                        onChange={(event) =>
+                          setCommentDrafts((current) => ({
+                            ...current,
+                            [update.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Add advice or feedback..."
+                      />
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => handlePostComment(update.id)}
+                      >
+                        Comment
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </article>
           ))}
         </div>

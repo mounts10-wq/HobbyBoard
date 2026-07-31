@@ -10,12 +10,16 @@ from flask_jwt_extended import (
 )
 
 from . import db
-from .models import User, Board, Task, BoardUpdate
+from .models import User, Board, Task, BoardUpdate, UserFollow, BoardUpdateComment
 
 api = Blueprint("api", __name__)
 
 ALLOWED_TASK_STATUSES = {"Not Started", "In Progress", "Complete"}
 ALLOWED_TASK_PRIORITIES = {"Low", "Medium", "High"}
+
+
+def can_view_board(board, viewer_user_id):
+    return board.user_id == viewer_user_id or bool(board.is_public)
 
 
 def build_local_plan_suggestions(title, description, materials, notes):
@@ -193,6 +197,7 @@ def create_board():
     description = str(data.get("description", "")).strip()
     materials = str(data.get("materials", "")).strip()
     notes = str(data.get("notes", "")).strip()
+    is_public = bool(data.get("is_public", False))
 
     if not title or not hobby_type:
         return jsonify({"error": "Title and hobby type are required"}), 400
@@ -203,6 +208,7 @@ def create_board():
         description=description,
         materials=materials,
         notes=notes,
+        is_public=is_public,
         user_id=user_id
     )
 
@@ -260,6 +266,9 @@ def update_board(board_id):
 
     if "notes" in data:
         board.notes = data.get("notes", "").strip()
+
+    if "is_public" in data:
+        board.is_public = bool(data.get("is_public"))
 
     db.session.commit()
 
@@ -379,12 +388,14 @@ def create_board_update(board_id):
 
     data = request.get_json(silent=True) or {}
     content = str(data.get("content", "")).strip()
+    media_url = str(data.get("media_url", "")).strip()
 
     if not content:
         return jsonify({"error": "Update content is required"}), 400
 
     update = BoardUpdate(
         content=content,
+        media_url=media_url or None,
         board_id=board.id,
         user_id=user_id
     )
@@ -415,6 +426,152 @@ def delete_board_update(update_id):
     db.session.commit()
 
     return jsonify({"message": "Update deleted successfully"}), 200
+
+
+@api.route("/users/<int:target_user_id>/follow", methods=["POST"])
+@jwt_required()
+def follow_user(target_user_id):
+    user_id = int(get_jwt_identity())
+
+    if user_id == target_user_id:
+        return jsonify({"error": "You cannot follow yourself"}), 400
+
+    target_user = db.session.get(User, target_user_id)
+    if not target_user:
+        return jsonify({"error": "User not found"}), 404
+
+    existing = UserFollow.query.filter_by(
+        follower_user_id=user_id,
+        followed_user_id=target_user_id
+    ).first()
+    if existing:
+        return jsonify({"error": "You are already following this user"}), 409
+
+    follow = UserFollow(follower_user_id=user_id, followed_user_id=target_user_id)
+    db.session.add(follow)
+    db.session.commit()
+
+    return jsonify({"message": "Now following user"}), 201
+
+
+@api.route("/users/<int:target_user_id>/follow", methods=["DELETE"])
+@jwt_required()
+def unfollow_user(target_user_id):
+    user_id = int(get_jwt_identity())
+
+    follow = UserFollow.query.filter_by(
+        follower_user_id=user_id,
+        followed_user_id=target_user_id
+    ).first()
+    if not follow:
+        return jsonify({"error": "Follow relationship not found"}), 404
+
+    db.session.delete(follow)
+    db.session.commit()
+
+    return jsonify({"message": "Unfollowed user"}), 200
+
+
+@api.route("/feed", methods=["GET"])
+@jwt_required()
+def get_social_feed():
+    user_id = int(get_jwt_identity())
+
+    followed_user_ids = db.session.query(UserFollow.followed_user_id).filter_by(
+        follower_user_id=user_id
+    )
+
+    updates = BoardUpdate.query.join(Board).filter(
+        (Board.user_id == user_id)
+        | ((Board.user_id.in_(followed_user_ids)) & (Board.is_public.is_(True)))
+    ).order_by(BoardUpdate.created_at.desc()).limit(50).all()
+
+    payload = []
+    for update in updates:
+        update_data = update.to_dict()
+        update_data["board_title"] = update.board.title if update.board else None
+        update_data["hobby_type"] = update.board.hobby_type if update.board else None
+        payload.append(update_data)
+
+    return jsonify({"updates": payload}), 200
+
+
+@api.route("/discover/boards", methods=["GET"])
+@jwt_required()
+def discover_boards():
+    query_text = str(request.args.get("q", "")).strip()
+    hobby_filter = str(request.args.get("hobby", "")).strip()
+
+    query = Board.query.filter_by(is_public=True)
+
+    if query_text:
+        pattern = f"%{query_text}%"
+        query = query.filter(
+            (Board.title.ilike(pattern))
+            | (Board.description.ilike(pattern))
+            | (Board.notes.ilike(pattern))
+        )
+
+    if hobby_filter:
+        hobby_pattern = f"%{hobby_filter}%"
+        query = query.filter(Board.hobby_type.ilike(hobby_pattern))
+
+    boards = query.order_by(Board.created_at.desc()).limit(50).all()
+
+    payload = []
+    for board in boards:
+        board_data = board.to_dict()
+        board_data["owner_username"] = board.user.username if board.user else None
+        payload.append(board_data)
+
+    return jsonify({"boards": payload}), 200
+
+
+@api.route("/updates/<int:update_id>/comments", methods=["GET"])
+@jwt_required()
+def get_update_comments(update_id):
+    user_id = int(get_jwt_identity())
+
+    update = db.session.get(BoardUpdate, update_id)
+    if not update:
+        return jsonify({"error": "Update not found"}), 404
+
+    if not can_view_board(update.board, user_id):
+        return jsonify({"error": "Update not found"}), 404
+
+    comments = BoardUpdateComment.query.filter_by(update_id=update_id) \
+        .order_by(BoardUpdateComment.created_at.asc()) \
+        .all()
+
+    return jsonify({"comments": [comment.to_dict() for comment in comments]}), 200
+
+
+@api.route("/updates/<int:update_id>/comments", methods=["POST"])
+@jwt_required()
+def create_update_comment(update_id):
+    user_id = int(get_jwt_identity())
+
+    update = db.session.get(BoardUpdate, update_id)
+    if not update:
+        return jsonify({"error": "Update not found"}), 404
+
+    if not can_view_board(update.board, user_id):
+        return jsonify({"error": "Update not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    content = str(data.get("content", "")).strip()
+
+    if not content:
+        return jsonify({"error": "Comment content is required"}), 400
+
+    comment = BoardUpdateComment(content=content, update_id=update_id, user_id=user_id)
+    db.session.add(comment)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Comment created successfully",
+        "comment": comment.to_dict()
+    }), 201
 
 @api.route("/boards/<int:board_id>/tasks", methods=["GET"])
 @jwt_required()

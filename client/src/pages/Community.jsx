@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../services/api";
+import MediaAttachment from "../components/MediaAttachment";
 
 function Community() {
   const { user } = useAuth();
@@ -175,11 +176,7 @@ function Community() {
 
               <p className="update-content">{update.content}</p>
 
-              {update.media_url && (
-                <p className="community-media-link">
-                  Media: <a href={update.media_url} target="_blank" rel="noreferrer">{update.media_url}</a>
-                </p>
-              )}
+              {update.media_url && <MediaAttachment url={update.media_url} />}
 
               {update.board_id && (
                 <div className="community-card-actions">

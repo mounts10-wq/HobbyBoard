@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../services/api";
+import MediaAttachment from "./MediaAttachment";
 
 function BoardUpdates({ boardId, canManage = false }) {
   const [updates, setUpdates] = useState([]);
@@ -184,11 +185,7 @@ function BoardUpdates({ boardId, canManage = false }) {
 
               <p className="update-content">{update.content}</p>
 
-              {update.media_url && (
-                <p className="community-media-link">
-                  Media: <a href={update.media_url} target="_blank" rel="noreferrer">{update.media_url}</a>
-                </p>
-              )}
+              {update.media_url && <MediaAttachment url={update.media_url} />}
 
               <div className="update-comments">
                 <button

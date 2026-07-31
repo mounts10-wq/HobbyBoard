@@ -4,6 +4,7 @@ import { apiRequest } from "../services/api";
 import TaskForm from "../components/TaskForm";
 import TaskCard from "../components/TaskCard";
 import BoardUpdates from "../components/BoardUpdates";
+import PlanningAssistant from "../components/PlanningAssistant";
 
 function BoardDetails() {
   const { boardId } = useParams();
@@ -125,6 +126,8 @@ function BoardDetails() {
             <p>{board.notes || "No planning notes yet."}</p>
           </div>
         </div>
+
+        {canManageBoard ? <PlanningAssistant board={board} /> : null}
       </section>
 
       <BoardUpdates boardId={boardId} canManage={canManageBoard} />

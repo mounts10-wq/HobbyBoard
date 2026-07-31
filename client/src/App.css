@@ -807,6 +807,12 @@ p {
   margin-bottom: 0.45rem;
 }
 
+.community-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .discover-panel {
   display: grid;
   gap: 0.85rem;

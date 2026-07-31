@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function TaskCard({ task, onUpdateTask, onDeleteTask }) {
+function TaskCard({ task, onUpdateTask, onDeleteTask, canManage = true }) {
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -60,7 +60,7 @@ function TaskCard({ task, onUpdateTask, onDeleteTask }) {
     }
   }
 
-  if (isEditing) {
+  if (isEditing && canManage) {
     return (
       <article className="task-card">
         <form onSubmit={handleSubmit} className="edit-form">
@@ -141,36 +141,40 @@ function TaskCard({ task, onUpdateTask, onDeleteTask }) {
         </div>
         <p>{task.description || "No description added."}</p>
 
-        <div className="task-controls">
-          <label>
-            Status
-            <select value={task.status} onChange={handleQuickStatusChange}>
-              <option value="Not Started">Not Started</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Complete">Complete</option>
-            </select>
-          </label>
+        {canManage && (
+          <div className="task-controls">
+            <label>
+              Status
+              <select value={task.status} onChange={handleQuickStatusChange}>
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Complete">Complete</option>
+              </select>
+            </label>
 
-          <label>
-            Priority
-            <select value={task.priority} onChange={handleQuickPriorityChange}>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </label>
+            <label>
+              Priority
+              <select value={task.priority} onChange={handleQuickPriorityChange}>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {canManage && (
+        <div className="board-card-actions">
+          <button className="edit-button" onClick={() => setIsEditing(true)}>
+            Edit
+          </button>
+
+          <button className="danger-button" onClick={() => onDeleteTask(task.id)}>
+            Delete Task
+          </button>
         </div>
-      </div>
-
-      <div className="board-card-actions">
-        <button className="edit-button" onClick={() => setIsEditing(true)}>
-          Edit
-        </button>
-
-        <button className="danger-button" onClick={() => onDeleteTask(task.id)}>
-          Delete Task
-        </button>
-      </div>
+      )}
     </article>
   );
 }

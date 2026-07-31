@@ -19,9 +19,19 @@ function Community() {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    fetchFollowingUsers();
     fetchFeed();
     fetchDiscoverBoards();
   }, []);
+
+  async function fetchFollowingUsers() {
+    try {
+      const data = await apiRequest("/me/following");
+      setFollowingUserIds(new Set(data.following_user_ids || []));
+    } catch {
+      setFollowingUserIds(new Set());
+    }
+  }
 
   async function fetchFeed() {
     setFeedLoading(true);
@@ -233,9 +243,30 @@ function Community() {
                         {board.hobby_type} • by {board.owner_username || "Community member"}
                       </p>
                     </div>
-                    <Link to={`/boards/${board.id}`} className="view-button">
-                      Open
-                    </Link>
+                    <div className="community-card-actions">
+                      {board.user_id !== user?.id && (
+                        followingUserIds.has(board.user_id) ? (
+                          <button
+                            type="button"
+                            className="cancel-button"
+                            onClick={() => handleUnfollow(board.user_id)}
+                          >
+                            Following
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => handleFollow(board.user_id)}
+                          >
+                            Follow
+                          </button>
+                        )
+                      )}
+                      <Link to={`/boards/${board.id}`} className="view-button">
+                        Open
+                      </Link>
+                    </div>
                   </div>
 
                   <p>{board.description || "No description shared yet."}</p>

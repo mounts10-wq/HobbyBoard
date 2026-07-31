@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../services/api";
 
-function BoardUpdates({ boardId }) {
+function BoardUpdates({ boardId, canManage = false }) {
   const [updates, setUpdates] = useState([]);
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
@@ -126,6 +126,7 @@ function BoardUpdates({ boardId }) {
         <span className="count-pill">Share progress</span>
       </div>
 
+      {canManage ? (
       <form className="update-form" onSubmit={handleSubmit}>
         <label>
           Optional media URL
@@ -152,6 +153,7 @@ function BoardUpdates({ boardId }) {
           {submitting ? "Posting..." : "Post Update"}
         </button>
       </form>
+      ) : null}
 
       {loading ? (
         <p className="loading-message">Loading updates...</p>
@@ -169,13 +171,15 @@ function BoardUpdates({ boardId }) {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  className="danger-button"
-                  onClick={() => handleDelete(update.id)}
-                >
-                  Delete
-                </button>
+                {canManage && (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() => handleDelete(update.id)}
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
 
               <p className="update-content">{update.content}</p>

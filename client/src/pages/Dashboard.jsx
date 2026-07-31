@@ -11,7 +11,6 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statsLoading, setStatsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [notice, setNotice] = useState("");
   const [stats, setStats] = useState({
     board_count: 0,
@@ -27,16 +26,6 @@ function Dashboard() {
     fetchBoards();
     fetchStats();
   }, []);
-
-  async function handleRefresh() {
-    setIsRefreshing(true);
-    setNotice("");
-
-    await Promise.all([fetchBoards(), fetchStats()]);
-
-    setNotice("Dashboard refreshed.");
-    setIsRefreshing(false);
-  }
 
   async function fetchBoards() {
     setLoading(true);
@@ -130,19 +119,9 @@ function Dashboard() {
       <section className="insights-panel">
         <div className="insights-header">
           <h2>Progress Snapshot</h2>
-          <div className="insights-actions">
-            {!statsLoading && (
-              <span className="count-pill">{stats.completion_rate}% complete</span>
-            )}
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? "Refreshing..." : "Refresh"}
-            </button>
-          </div>
+          {!statsLoading && (
+            <span className="count-pill">{stats.completion_rate}% complete</span>
+          )}
         </div>
 
         {statsLoading ? (

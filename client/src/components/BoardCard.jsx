@@ -16,6 +16,7 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
     description: board.description || "",
     materials: board.materials || "",
     notes: board.notes || "",
+    is_public: Boolean(board.is_public),
   });
 
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
   function handleChange(event) {
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value,
+      [event.target.name]: event.target.type === "checkbox" ? event.target.checked : event.target.value,
     });
   }
 
@@ -93,6 +94,16 @@ function BoardCard({ board, onDeleteBoard, onUpdateBoard }) {
               value={formData.notes}
               onChange={handleChange}
             />
+          </label>
+
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              name="is_public"
+              checked={Boolean(formData.is_public)}
+              onChange={handleChange}
+            />
+            Share this board publicly in Community.
           </label>
 
           {error && <p className="error-message">{error}</p>}

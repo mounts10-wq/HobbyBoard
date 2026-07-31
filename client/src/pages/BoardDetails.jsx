@@ -4,7 +4,6 @@ import { apiRequest } from "../services/api";
 import TaskForm from "../components/TaskForm";
 import TaskCard from "../components/TaskCard";
 import BoardUpdates from "../components/BoardUpdates";
-import PlanningAssistant from "../components/PlanningAssistant";
 
 function BoardDetails() {
   const { boardId } = useParams();
@@ -13,32 +12,11 @@ function BoardDetails() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const canManageBoard = Boolean(board?.is_owner);
 
   const completedCount = tasks.filter((task) => task.status === "Complete").length;
   const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  const nextAction = (() => {
-    if (!tasks.length) {
-      return "Start by adding your first task so the board has a clear next step.";
-    }
-
-    const notStarted = tasks.find((task) => task.status === "Not Started");
-    const inProgress = tasks.find((task) => task.status === "In Progress");
-
-    if (progressPercent === 100) {
-      return "Everything looks wrapped up here. Consider sharing a milestone update or adding one final polish task.";
-    }
-
-    if (notStarted) {
-      return `Focus on "${notStarted.title}" first — it is still waiting to begin.`;
-    }
-
-    if (inProgress) {
-      return `Keep momentum on "${inProgress.title}" and move it closer to completion.`;
-    }
-
-    return "Pick the most important task and make a quick move on it to keep progress steady.";
-  })();
 
   useEffect(() => {
     fetchBoard();
@@ -124,6 +102,10 @@ function BoardDetails() {
       <div className="board-detail-header">
         <h1>{board.title}</h1>
         <p className="board-type">{board.hobby_type}</p>
+        <p className={board.is_public ? "visibility-pill public" : "visibility-pill private"}>
+          {board.is_public ? "Public board" : "Private board"}
+        </p>
+        <p className="update-meta">Owner: {board.owner_username || "Unknown"}</p>
         <p>{board.description || "No description added yet."}</p>
       </div>
 
@@ -131,11 +113,6 @@ function BoardDetails() {
         <div className="task-section-header">
           <h2>Planning Notes</h2>
           <span className="count-pill">{progressPercent}% done</span>
-        </div>
-
-        <div className="next-action-card">
-          <h3>Suggested next step</h3>
-          <p>{nextAction}</p>
         </div>
 
         <div className="planning-grid">
@@ -150,11 +127,9 @@ function BoardDetails() {
         </div>
       </section>
 
-      <PlanningAssistant board={board} />
+      <BoardUpdates boardId={boardId} canManage={canManageBoard} />
 
-      <BoardUpdates boardId={boardId} />
-
-      <TaskForm onCreateTask={handleCreateTask} />
+      {canManageBoard ? <TaskForm onCreateTask={handleCreateTask} /> : null}
 
       <div className="task-section">
         <div className="task-section-header">
@@ -172,6 +147,7 @@ function BoardDetails() {
                 task={task}
                 onUpdateTask={handleUpdateTask}
                 onDeleteTask={handleDeleteTask}
+                canManage={canManageBoard}
               />
             ))}
           </div>

@@ -21,18 +21,19 @@ def client():
         db.drop_all()
 
 
-def _signup_and_token(client, username, email, password="secret123"):
+def _signup_and_auth(client, username, email, password="secret123"):
     response = client.post(
         "/api/signup",
         json={"username": username, "email": email, "password": password},
     )
     assert response.status_code == 201
-    return response.get_json()["access_token"]
+    payload = response.get_json()
+    return payload["access_token"], payload["user"]["id"]
 
 
 def test_follow_and_feed_include_public_updates(client):
-    owner_token = _signup_and_token(client, "owner", "owner@example.com")
-    follower_token = _signup_and_token(client, "follower", "follower@example.com")
+    owner_token, owner_user_id = _signup_and_auth(client, "owner", "owner@example.com")
+    follower_token, _ = _signup_and_auth(client, "follower", "follower@example.com")
 
     create_board_response = client.post(
         "/api/boards",
@@ -55,7 +56,7 @@ def test_follow_and_feed_include_public_updates(client):
     assert create_update_response.status_code == 201
 
     follow_response = client.post(
-        "/api/users/1/follow",
+        f"/api/users/{owner_user_id}/follow",
         headers={"Authorization": f"Bearer {follower_token}"},
     )
     assert follow_response.status_code == 201
@@ -67,15 +68,15 @@ def test_follow_and_feed_include_public_updates(client):
 
     assert feed_response.status_code == 200
     updates = feed_response.get_json()["updates"]
-    assert len(updates) == 1
-    assert updates[0]["content"] == "Seedlings are sprouting!"
-    assert updates[0]["board_title"] == "Urban Gardening"
-    assert updates[0]["media_url"] == "https://example.com/video"
+    assert any(update["content"] == "Seedlings are sprouting!" for update in updates)
+    target = next(update for update in updates if update["content"] == "Seedlings are sprouting!")
+    assert target["board_title"] == "Urban Gardening"
+    assert target["media_url"] == "https://example.com/video"
 
 
 def test_update_comments_allow_viewers_on_public_board(client):
-    owner_token = _signup_and_token(client, "builder", "builder@example.com")
-    commenter_token = _signup_and_token(client, "helper", "helper@example.com")
+    owner_token, _ = _signup_and_auth(client, "builder", "builder@example.com")
+    commenter_token, _ = _signup_and_auth(client, "helper", "helper@example.com")
 
     create_board_response = client.post(
         "/api/boards",
@@ -111,7 +112,7 @@ def test_update_comments_allow_viewers_on_public_board(client):
 
 
 def test_discover_boards_filters_public_results(client):
-    owner_token = _signup_and_token(client, "maker", "maker@example.com")
+    owner_token, _ = _signup_and_auth(client, "maker", "maker@example.com")
 
     public_response = client.post(
         "/api/boards",

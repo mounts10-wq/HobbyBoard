@@ -226,12 +226,16 @@ def create_board():
 def get_board(board_id):
     user_id = int(get_jwt_identity())
 
-    board = Board.query.filter_by(id=board_id, user_id=user_id).first()
+    board = db.session.get(Board, board_id)
 
-    if not board:
+    if not board or not can_view_board(board, user_id):
         return jsonify({"error": "Board not found"}), 404
 
-    return jsonify({"board": board.to_dict(include_tasks=True)}), 200
+    board_data = board.to_dict(include_tasks=True)
+    board_data["is_owner"] = board.user_id == user_id
+    board_data["owner_username"] = board.user.username if board.user else None
+
+    return jsonify({"board": board_data}), 200
 
 
 @api.route("/boards/<int:board_id>", methods=["PATCH"])
@@ -364,9 +368,9 @@ def generate_plan_suggestions():
 def get_board_updates(board_id):
     user_id = int(get_jwt_identity())
 
-    board = Board.query.filter_by(id=board_id, user_id=user_id).first()
+    board = db.session.get(Board, board_id)
 
-    if not board:
+    if not board or not can_view_board(board, user_id):
         return jsonify({"error": "Board not found"}), 404
 
     updates = BoardUpdate.query.filter_by(board_id=board.id) \
@@ -374,6 +378,17 @@ def get_board_updates(board_id):
         .all()
 
     return jsonify({"updates": [update.to_dict() for update in updates]}), 200
+
+
+@api.route("/me/following", methods=["GET"])
+@jwt_required()
+def get_following_users():
+    user_id = int(get_jwt_identity())
+
+    follow_rows = UserFollow.query.filter_by(follower_user_id=user_id).all()
+    following_ids = [row.followed_user_id for row in follow_rows]
+
+    return jsonify({"following_user_ids": following_ids}), 200
 
 
 @api.route("/boards/<int:board_id>/updates", methods=["POST"])
@@ -578,9 +593,9 @@ def create_update_comment(update_id):
 def get_tasks_for_board(board_id):
     user_id = int(get_jwt_identity())
 
-    board = Board.query.filter_by(id=board_id, user_id=user_id).first()
+    board = db.session.get(Board, board_id)
 
-    if not board:
+    if not board or not can_view_board(board, user_id):
         return jsonify({"error": "Board not found"}), 404
 
     page = request.args.get("page", 1, type=int)

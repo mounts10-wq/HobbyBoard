@@ -786,6 +786,39 @@ p {
   color: #0f5d57;
 }
 
+.followed-boards-panel {
+  margin-bottom: 1rem;
+}
+
+.followed-board-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.followed-board-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-decoration: none;
+  color: #3e2f25;
+  background: #fff6ea;
+  border: 1px solid #e8d9cb;
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  min-width: 155px;
+}
+
+.followed-board-chip span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+}
+
+.followed-board-chip:hover {
+  border-color: #cfae93;
+  box-shadow: 0 6px 14px rgba(72, 44, 28, 0.12);
+}
+
 .community-list {
   display: grid;
   gap: 0.85rem;

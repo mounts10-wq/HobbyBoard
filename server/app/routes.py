@@ -511,6 +511,29 @@ def get_social_feed():
     return jsonify({"updates": payload}), 200
 
 
+@api.route("/me/following/boards", methods=["GET"])
+@jwt_required()
+def get_following_boards():
+    user_id = int(get_jwt_identity())
+
+    followed_user_ids = db.session.query(UserFollow.followed_user_id).filter_by(
+        follower_user_id=user_id
+    )
+
+    boards = Board.query.filter(
+        Board.user_id.in_(followed_user_ids),
+        Board.is_public.is_(True)
+    ).order_by(Board.created_at.desc()).limit(100).all()
+
+    payload = []
+    for board in boards:
+        board_data = board.to_dict()
+        board_data["owner_username"] = board.user.username if board.user else None
+        payload.append(board_data)
+
+    return jsonify({"boards": payload}), 200
+
+
 @api.route("/discover/boards", methods=["GET"])
 @jwt_required()
 def discover_boards():

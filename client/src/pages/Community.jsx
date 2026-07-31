@@ -11,6 +11,8 @@ function Community() {
   const [feedLoading, setFeedLoading] = useState(true);
   const [feedError, setFeedError] = useState("");
   const [discoverBoards, setDiscoverBoards] = useState([]);
+  const [followingBoards, setFollowingBoards] = useState([]);
+  const [followingBoardsLoading, setFollowingBoardsLoading] = useState(true);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [discoverError, setDiscoverError] = useState("");
   const [query, setQuery] = useState("");
@@ -21,8 +23,22 @@ function Community() {
   useEffect(() => {
     fetchFollowingUsers();
     fetchFeed();
+    fetchFollowingBoards();
     fetchDiscoverBoards();
   }, []);
+
+  async function fetchFollowingBoards() {
+    setFollowingBoardsLoading(true);
+
+    try {
+      const data = await apiRequest("/me/following/boards");
+      setFollowingBoards(data.boards || []);
+    } catch {
+      setFollowingBoards([]);
+    } finally {
+      setFollowingBoardsLoading(false);
+    }
+  }
 
   async function fetchFollowingUsers() {
     try {
@@ -84,6 +100,7 @@ function Community() {
       setFollowingUserIds((current) => new Set([...current, targetUserId]));
       setNotice("Following user.");
       fetchFeed();
+      fetchFollowingBoards();
     } catch (error) {
       setNotice(error.message);
     }
@@ -101,6 +118,7 @@ function Community() {
       });
       setNotice("Unfollowed user.");
       fetchFeed();
+      fetchFollowingBoards();
     } catch (error) {
       setNotice(error.message);
     }
@@ -162,6 +180,14 @@ function Community() {
                   Media: <a href={update.media_url} target="_blank" rel="noreferrer">{update.media_url}</a>
                 </p>
               )}
+
+              {update.board_id && (
+                <div className="community-card-actions">
+                  <Link to={`/boards/${update.board_id}`} className="view-button">
+                    Open board
+                  </Link>
+                </div>
+              )}
             </article>
           );
         })}
@@ -198,6 +224,28 @@ function Community() {
       </div>
 
       {notice && <p className="success-message">{notice}</p>}
+
+      <section className="followed-boards-panel">
+        <div className="task-section-header">
+          <h2>Following Boards</h2>
+          <span className="count-pill">Quick access</span>
+        </div>
+
+        {followingBoardsLoading ? (
+          <p className="loading-message">Loading followed boards...</p>
+        ) : followingBoards.length === 0 ? (
+          <p className="empty-state">Follow users to see their public boards here for quick access.</p>
+        ) : (
+          <div className="followed-board-chips">
+            {followingBoards.map((board) => (
+              <Link key={`followed-${board.id}`} to={`/boards/${board.id}`} className="followed-board-chip">
+                {board.title}
+                <span>{board.owner_username || "Community member"}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       {activeTab === "feed" ? (
         feedView

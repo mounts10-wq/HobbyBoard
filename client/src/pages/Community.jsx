@@ -18,11 +18,10 @@ function Community() {
   const [discoverError, setDiscoverError] = useState("");
   const [query, setQuery] = useState("");
   const [hobby, setHobby] = useState("");
-  const [followingUserIds, setFollowingUserIds] = useState(new Set());
+  const [followingBoardIds, setFollowingBoardIds] = useState(new Set());
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    fetchFollowingUsers();
     fetchFeed();
     fetchFollowingBoards();
     fetchDiscoverBoards();
@@ -33,20 +32,14 @@ function Community() {
 
     try {
       const data = await apiRequest("/me/following/boards");
-      setFollowingBoards(data.boards || []);
+      const boards = data.boards || [];
+      setFollowingBoards(boards);
+      setFollowingBoardIds(new Set(boards.map((board) => board.id)));
     } catch {
       setFollowingBoards([]);
+      setFollowingBoardIds(new Set());
     } finally {
       setFollowingBoardsLoading(false);
-    }
-  }
-
-  async function fetchFollowingUsers() {
-    try {
-      const data = await apiRequest("/me/following");
-      setFollowingUserIds(new Set(data.following_user_ids || []));
-    } catch {
-      setFollowingUserIds(new Set());
     }
   }
 
@@ -93,13 +86,13 @@ function Community() {
     }
   }
 
-  async function handleFollow(targetUserId) {
+  async function handleFollowBoard(boardId) {
     setNotice("");
 
     try {
-      await apiRequest(`/users/${targetUserId}/follow`, { method: "POST" });
-      setFollowingUserIds((current) => new Set([...current, targetUserId]));
-      setNotice("Following user.");
+      await apiRequest(`/boards/${boardId}/follow`, { method: "POST" });
+      setFollowingBoardIds((current) => new Set([...current, boardId]));
+      setNotice("Following board.");
       fetchFeed();
       fetchFollowingBoards();
     } catch (error) {
@@ -107,17 +100,17 @@ function Community() {
     }
   }
 
-  async function handleUnfollow(targetUserId) {
+  async function handleUnfollowBoard(boardId) {
     setNotice("");
 
     try {
-      await apiRequest(`/users/${targetUserId}/follow`, { method: "DELETE" });
-      setFollowingUserIds((current) => {
+      await apiRequest(`/boards/${boardId}/follow`, { method: "DELETE" });
+      setFollowingBoardIds((current) => {
         const next = new Set(current);
-        next.delete(targetUserId);
+        next.delete(boardId);
         return next;
       });
-      setNotice("Unfollowed user.");
+      setNotice("Unfollowed board.");
       fetchFeed();
       fetchFollowingBoards();
     } catch (error) {
@@ -151,7 +144,7 @@ function Community() {
       <div className="community-list">
         {feedUpdates.map((update) => {
           const isSelf = update.user_id === user?.id;
-          const isFollowing = followingUserIds.has(update.user_id);
+          const isFollowing = followingBoardIds.has(update.board_id);
 
           return (
             <article className="community-card" key={`feed-${update.id}`}>
@@ -167,9 +160,9 @@ function Community() {
                   <button
                     type="button"
                     className={isFollowing ? "cancel-button" : "secondary-button"}
-                    onClick={() => (isFollowing ? handleUnfollow(update.user_id) : handleFollow(update.user_id))}
+                    onClick={() => (isFollowing ? handleUnfollowBoard(update.board_id) : handleFollowBoard(update.board_id))}
                   >
-                    {isFollowing ? "Following" : "Follow"}
+                    {isFollowing ? "Following board" : "Follow board"}
                   </button>
                 )}
               </div>
@@ -190,7 +183,7 @@ function Community() {
         })}
       </div>
     );
-  }, [feedLoading, feedError, feedUpdates, followingUserIds, user?.id]);
+  }, [feedLoading, feedError, feedUpdates, followingBoardIds, user?.id]);
 
   return (
     <section>
@@ -231,7 +224,7 @@ function Community() {
         {followingBoardsLoading ? (
           <p className="loading-message">Loading followed boards...</p>
         ) : followingBoards.length === 0 ? (
-          <p className="empty-state">Follow users to see their public boards here for quick access.</p>
+          <p className="empty-state">Follow boards to see quick access links here.</p>
         ) : (
           <div className="followed-board-chips">
             {followingBoards.map((board) => (
@@ -290,21 +283,21 @@ function Community() {
                     </div>
                     <div className="community-card-actions">
                       {board.user_id !== user?.id && (
-                        followingUserIds.has(board.user_id) ? (
+                        followingBoardIds.has(board.id) ? (
                           <button
                             type="button"
                             className="cancel-button"
-                            onClick={() => handleUnfollow(board.user_id)}
+                            onClick={() => handleUnfollowBoard(board.id)}
                           >
-                            Following
+                            Following board
                           </button>
                         ) : (
                           <button
                             type="button"
                             className="secondary-button"
-                            onClick={() => handleFollow(board.user_id)}
+                            onClick={() => handleFollowBoard(board.id)}
                           >
-                            Follow
+                            Follow board
                           </button>
                         )
                       )}

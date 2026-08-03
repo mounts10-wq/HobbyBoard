@@ -31,7 +31,7 @@ function BoardForm({ onCreateBoard }) {
     setSuccess("");
 
     if (!formData.title.trim() || !formData.hobby_type.trim()) {
-      setError("Title and hobby type are required.");
+      setError("Title and hobby/project type are required.");
       return;
     }
 
@@ -58,7 +58,7 @@ function BoardForm({ onCreateBoard }) {
 
   return (
     <form onSubmit={handleSubmit} className="board-form">
-      <h2>Create a New Project Board</h2>
+      <h2>Create a New Hobby/Project Board</h2>
 
       <label>
         Board Title
@@ -72,7 +72,7 @@ function BoardForm({ onCreateBoard }) {
       </label>
 
       <label>
-        Project Type
+        Hobby/Project Type
         <input
           type="text"
           name="hobby_type"

@@ -10,7 +10,7 @@ from flask_jwt_extended import (
 )
 
 from . import db
-from .models import User, Board, Task, BoardUpdate, UserFollow, BoardUpdateComment
+from .models import User, Board, Task, BoardUpdate, UserFollow, BoardUpdateComment, BoardFollow
 
 api = Blueprint("api", __name__)
 
@@ -492,13 +492,13 @@ def unfollow_user(target_user_id):
 def get_social_feed():
     user_id = int(get_jwt_identity())
 
-    followed_user_ids = db.session.query(UserFollow.followed_user_id).filter_by(
+    followed_board_ids = db.session.query(BoardFollow.board_id).filter_by(
         follower_user_id=user_id
     )
 
     updates = BoardUpdate.query.join(Board).filter(
         (Board.user_id == user_id)
-        | ((Board.user_id.in_(followed_user_ids)) & (Board.is_public.is_(True)))
+        | ((Board.id.in_(followed_board_ids)) & (Board.is_public.is_(True)))
     ).order_by(BoardUpdate.created_at.desc()).limit(50).all()
 
     payload = []
@@ -516,12 +516,12 @@ def get_social_feed():
 def get_following_boards():
     user_id = int(get_jwt_identity())
 
-    followed_user_ids = db.session.query(UserFollow.followed_user_id).filter_by(
+    followed_board_ids = db.session.query(BoardFollow.board_id).filter_by(
         follower_user_id=user_id
     )
 
     boards = Board.query.filter(
-        Board.user_id.in_(followed_user_ids),
+        Board.id.in_(followed_board_ids),
         Board.is_public.is_(True)
     ).order_by(Board.created_at.desc()).limit(100).all()
 
@@ -532,6 +532,50 @@ def get_following_boards():
         payload.append(board_data)
 
     return jsonify({"boards": payload}), 200
+
+
+@api.route("/boards/<int:board_id>/follow", methods=["POST"])
+@jwt_required()
+def follow_board(board_id):
+    user_id = int(get_jwt_identity())
+
+    board = db.session.get(Board, board_id)
+    if not board or not board.is_public:
+        return jsonify({"error": "Board not found"}), 404
+
+    if board.user_id == user_id:
+        return jsonify({"error": "You cannot follow your own board"}), 400
+
+    existing = BoardFollow.query.filter_by(
+        follower_user_id=user_id,
+        board_id=board_id
+    ).first()
+    if existing:
+        return jsonify({"error": "You are already following this board"}), 409
+
+    follow = BoardFollow(follower_user_id=user_id, board_id=board_id)
+    db.session.add(follow)
+    db.session.commit()
+
+    return jsonify({"message": "Now following board"}), 201
+
+
+@api.route("/boards/<int:board_id>/follow", methods=["DELETE"])
+@jwt_required()
+def unfollow_board(board_id):
+    user_id = int(get_jwt_identity())
+
+    follow = BoardFollow.query.filter_by(
+        follower_user_id=user_id,
+        board_id=board_id
+    ).first()
+    if not follow:
+        return jsonify({"error": "Board follow relationship not found"}), 404
+
+    db.session.delete(follow)
+    db.session.commit()
+
+    return jsonify({"message": "Unfollowed board"}), 200
 
 
 @api.route("/discover/boards", methods=["GET"])

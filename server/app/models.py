@@ -42,6 +42,12 @@ class User(db.Model):
         back_populates="followed",
         cascade="all, delete-orphan"
     )
+    followed_boards = db.relationship(
+        "BoardFollow",
+        foreign_keys="BoardFollow.follower_user_id",
+        back_populates="follower",
+        cascade="all, delete-orphan"
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -79,6 +85,11 @@ class Board(db.Model):
     )
     updates = db.relationship(
         "BoardUpdate",
+        back_populates="board",
+        cascade="all, delete-orphan"
+    )
+    followers = db.relationship(
+        "BoardFollow",
         back_populates="board",
         cascade="all, delete-orphan"
     )
@@ -172,6 +183,22 @@ class UserFollow(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint("follower_user_id", "followed_user_id", name="uq_user_follow_pair"),
+    )
+
+
+class BoardFollow(db.Model):
+    __tablename__ = "board_follows"
+
+    id = db.Column(db.Integer, primary_key=True)
+    follower_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    board_id = db.Column(db.Integer, db.ForeignKey("boards.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    follower = db.relationship("User", back_populates="followed_boards")
+    board = db.relationship("Board", back_populates="followers")
+
+    __table_args__ = (
+        db.UniqueConstraint("follower_user_id", "board_id", name="uq_board_follow_pair"),
     )
 
 

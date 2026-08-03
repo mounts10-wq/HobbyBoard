@@ -35,7 +35,7 @@ def _signup_and_auth(client, username, email, password="secret123"):
     return payload["access_token"], payload["user"]["id"]
 
 
-def test_follow_and_feed_include_public_updates(client):
+def test_follow_board_and_feed_include_public_updates(client):
     owner_token, owner_user_id = _signup_and_auth(client, "owner", "owner@example.com")
     follower_token, _ = _signup_and_auth(client, "follower", "follower@example.com")
 
@@ -60,7 +60,7 @@ def test_follow_and_feed_include_public_updates(client):
     assert create_update_response.status_code == 201
 
     follow_response = client.post(
-        f"/api/users/{owner_user_id}/follow",
+        f"/api/boards/{board_id}/follow",
         headers={"Authorization": f"Bearer {follower_token}"},
     )
     assert follow_response.status_code == 201
@@ -76,6 +76,62 @@ def test_follow_and_feed_include_public_updates(client):
     target = next(update for update in updates if update["content"] == "Seedlings are sprouting!")
     assert target["board_title"] == "Urban Gardening"
     assert target["media_url"] == "https://example.com/video"
+
+
+def test_following_one_board_does_not_follow_all_user_boards(client):
+    owner_token, _ = _signup_and_auth(client, "james", "james@example.com")
+    follower_token, _ = _signup_and_auth(client, "felina", "felina@example.com")
+
+    bronco_board_response = client.post(
+        "/api/boards",
+        json={"title": "Bronco", "hobby_type": "Cars", "is_public": True},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    bronco_board_id = bronco_board_response.get_json()["board"]["id"]
+
+    garden_board_response = client.post(
+        "/api/boards",
+        json={"title": "Garden", "hobby_type": "Gardening", "is_public": True},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    garden_board_id = garden_board_response.get_json()["board"]["id"]
+
+    client.post(
+        f"/api/boards/{bronco_board_id}/updates",
+        json={"content": "Rebuilt the front suspension."},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    client.post(
+        f"/api/boards/{garden_board_id}/updates",
+        json={"content": "Planted tomatoes this morning."},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+
+    follow_response = client.post(
+        f"/api/boards/{bronco_board_id}/follow",
+        headers={"Authorization": f"Bearer {follower_token}"},
+    )
+    assert follow_response.status_code == 201
+
+    feed_response = client.get(
+        "/api/feed",
+        headers={"Authorization": f"Bearer {follower_token}"},
+    )
+
+    assert feed_response.status_code == 200
+    updates = feed_response.get_json()["updates"]
+    feed_contents = {item["content"] for item in updates}
+    assert "Rebuilt the front suspension." in feed_contents
+    assert "Planted tomatoes this morning." not in feed_contents
+
+    following_boards_response = client.get(
+        "/api/me/following/boards",
+        headers={"Authorization": f"Bearer {follower_token}"},
+    )
+    assert following_boards_response.status_code == 200
+    boards = following_boards_response.get_json()["boards"]
+    assert len(boards) == 1
+    assert boards[0]["title"] == "Bronco"
 
 
 def test_update_comments_allow_viewers_on_public_board(client):

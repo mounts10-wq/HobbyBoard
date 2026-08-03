@@ -14,6 +14,7 @@ I wanted a cleaner way to manage personal projects from start to finish. HobbyBo
 - Full CRUD for boards
 - Full CRUD for tasks
 - Board updates for posting milestone progress
+- Board-level follows (follow one board without following all of a user's boards)
 - Pagination on board and task endpoints
 - Protected frontend routes for authenticated pages
 - Planning assistant support for board-based next-step ideas
@@ -74,6 +75,13 @@ Board Updates:
 - GET /api/boards/:board_id/updates
 - POST /api/boards/:board_id/updates
 - DELETE /api/updates/:id
+
+Social:
+- GET /api/feed
+- GET /api/discover/boards
+- GET /api/me/following/boards
+- POST /api/boards/:board_id/follow
+- DELETE /api/boards/:board_id/follow
 
 ## Frontend Routes
 

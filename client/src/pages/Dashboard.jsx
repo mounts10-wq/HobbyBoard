@@ -111,7 +111,7 @@ function Dashboard() {
     <section>
       <div className="dashboard-header">
         <div>
-          <h1>Your Project Boards</h1>
+          <h1>Your Hobby/Project Boards</h1>
           <p>Welcome, {user?.username}. Create boards to organize your projects.</p>
         </div>
       </div>

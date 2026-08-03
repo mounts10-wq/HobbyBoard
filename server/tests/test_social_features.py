@@ -12,7 +12,11 @@ from app.models import Board, BoardUpdate, User
 @pytest.fixture
 def client():
     app = create_app()
-    app.config.update(TESTING=True, SQLALCHEMY_DATABASE_URI="sqlite:///:memory:")
+    app.config.update(
+        TESTING=True,
+        SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
+        JWT_SECRET_KEY="test-jwt-secret-key-at-least-32-bytes",
+    )
 
     with app.app_context():
         db.create_all()

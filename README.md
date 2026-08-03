@@ -111,7 +111,7 @@ Create a .env file in server/:
 
 ```env
 SECRET_KEY=dev-secret-key
-JWT_SECRET_KEY=dev-jwt-secret-key
+JWT_SECRET_KEY=dev-jwt-secret-key-change-me-32chars
 DATABASE_URL=sqlite:///hobbyboard.db
 FLASK_RUN_HOST=127.0.0.1
 FLASK_RUN_PORT=5000
@@ -120,11 +120,7 @@ FLASK_DEBUG=1
 
 The app now stores its SQLite database in the server instance folder by default, so board and user data remain consistent across runs.
 
-Run migrations:
-
-```bash
-python3 -m flask --app run.py db upgrade
-```
+No migration command is required for local setup; tables are created automatically at app startup.
 
 ### 3. Frontend Setup (one-time)
 
@@ -149,7 +145,6 @@ Terminal 1 (backend):
 ```bash
 cd HobbyBoard/server
 source venv/bin/activate
-python3 -m flask --app run.py db upgrade
 python3 run.py
 ```
 

@@ -712,14 +712,6 @@ p {
   line-height: 1.6;
 }
 
-.community-media-link {
-  margin-top: 0.7rem;
-  color: var(--text-soft);
-}
-
-.community-media-link a {
-  color: var(--brand-strong);
-}
 
 .update-comments {
   margin-top: 0.9rem;
@@ -820,21 +812,25 @@ p {
 }
 
 .media-attachment {
-  margin-top: 0.7rem;
+  margin-top: 0.8rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2d4c8;
+  background: #faf5ef;
 }
 
 .media-preview {
+  display: block;
   width: 100%;
-  max-height: 380px;
-  border-radius: 12px;
-  border: 1px solid #e2d4c8;
-  object-fit: cover;
-  background: #f7f2ec;
+  max-height: 480px;
+  object-fit: contain;
+  background: #f4ede6;
 }
 
 .media-preview-embed {
+  width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 220px;
+  min-height: 240px;
   border: 0;
 }
 

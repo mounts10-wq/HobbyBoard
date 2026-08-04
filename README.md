@@ -13,11 +13,12 @@ I wanted a cleaner way to manage personal projects from start to finish. HobbyBo
 - Ownership-based authorization for boards, tasks, and updates
 - Full CRUD for boards
 - Full CRUD for tasks
-- Board updates for posting milestone progress
+- Board updates for posting milestone progress with photo and video uploads
 - Board-level follows (follow one board without following all of a user's boards)
 - Pagination on board and task endpoints
 - Protected frontend routes for authenticated pages
 - Planning assistant support for board-based next-step ideas
+- Community discovery for public boards based on search and hobby filters
 
 ## Tech Stack
 
@@ -126,6 +127,8 @@ FLASK_RUN_PORT=5000
 FLASK_DEBUG=1
 ```
 
+If you are using PowerShell on Windows, use `Set-ExecutionPolicy -Scope Process Bypass` only if activation is blocked, then run `.\venv\Scripts\Activate.ps1`.
+
 The app now stores its SQLite database in the server instance folder by default, so board and user data remain consistent across runs.
 
 No migration command is required for local setup; tables are created automatically at app startup.
@@ -145,6 +148,8 @@ The default frontend environment file points the app at the local backend:
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:5000/api
 ```
+
+If the frontend cannot reach the backend, confirm that the backend is running on port 5000 and that the Vite dev server is using the same URL.
 
 ### 4. Start the App
 
@@ -171,14 +176,23 @@ App URLs:
 
 Note: The client API base URL currently points to http://127.0.0.1:5000/api.
 
+### 5. Media Uploads
+
+Media files uploaded from the board update form are stored locally in the server uploads folder and are only intended to be viewable by:
+- the board owner
+- users who follow that specific board
+
+These files are not meant to be committed to Git and should stay local to each machine for the MVP.
+
 ## Troubleshooting
 
-- If flask is not found, activate the virtual environment with source venv/bin/activate.
-- If npm run dev fails, run npm install inside client/ first.
-- If python is mapped to Python 2, use python3 commands exactly as shown.
+- If flask is not found, activate the virtual environment with `source venv/bin/activate`.
+- If npm run dev fails, run `npm install` inside client/ first.
+- If python is mapped to Python 2, use `python3` commands exactly as shown.
 - Keep backend and frontend running in separate terminals.
-- Use Ctrl+C in each terminal to stop servers.
-- To enable the AI planning assistant with a real model response, add ANTHROPIC_API_KEY to your server/.env file with your Anthropic key. Without that key, the assistant falls back to helpful local suggestions.
+- Use Ctrl+C in each terminal to stop the servers.
+- If the browser shows a blank or broken media preview, confirm that the backend is still running and that the upload was created successfully.
+- To enable the AI planning assistant with a real model response, add `ANTHROPIC_API_KEY` to your server/.env file with your Anthropic key. Without that key, the assistant falls back to helpful local suggestions.
 
 ## Future Improvements
 

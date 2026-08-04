@@ -1,18 +1,24 @@
 import json
 import os
 import re
+from pathlib import Path
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_from_directory
+from werkzeug.utils import secure_filename
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
-    get_jwt_identity
+    get_jwt_identity,
+    decode_token,
 )
 
 from . import db
 from .models import User, Board, Task, BoardUpdate, UserFollow, BoardUpdateComment, BoardFollow
 
 api = Blueprint("api", __name__)
+
+UPLOAD_DIR = Path(__file__).resolve().parents[1] / "instance" / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 ALLOWED_TASK_STATUSES = {"Not Started", "In Progress", "Complete"}
 ALLOWED_TASK_PRIORITIES = {"Low", "Medium", "High"}
@@ -55,6 +61,41 @@ def build_local_plan_suggestions(title, description, materials, notes):
 @api.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"message": "HobbyBoard API is running"}), 200
+
+
+@api.route("/uploads/<path:filename>", methods=["GET"])
+def serve_upload(filename):
+    token = request.args.get("token", "").strip()
+    if not token:
+        return jsonify({"error": "Access denied"}), 403
+
+    try:
+        payload = decode_token(token)
+        user_id = int(payload.get("sub"))
+    except Exception:
+        return jsonify({"error": "Access denied"}), 403
+
+    upload_path = UPLOAD_DIR / filename
+    if not upload_path.exists() or not upload_path.is_file():
+        return jsonify({"error": "Upload not found"}), 404
+
+    update = BoardUpdate.query.filter_by(media_url=f"/api/uploads/{filename}").first()
+    if not update:
+        return jsonify({"error": "Upload not found"}), 404
+
+    board = update.board
+    if not board or not can_view_board(board, user_id):
+        return jsonify({"error": "Access denied"}), 403
+
+    if board.user_id != user_id:
+        follow_exists = BoardFollow.query.filter_by(
+            follower_user_id=user_id,
+            board_id=board.id,
+        ).first()
+        if not follow_exists:
+            return jsonify({"error": "Access denied"}), 403
+
+    return send_from_directory(UPLOAD_DIR, filename)
 
 
 @api.route("/signup", methods=["POST"])
@@ -401,16 +442,39 @@ def create_board_update(board_id):
     if not board:
         return jsonify({"error": "Board not found"}), 404
 
-    data = request.get_json(silent=True) or {}
-    content = str(data.get("content", "")).strip()
-    media_url = str(data.get("media_url", "")).strip()
+    if request.content_type and "multipart/form-data" in request.content_type:
+        content = str(request.form.get("content", "")).strip()
+        media_url = str(request.form.get("media_url", "")).strip()
+        media_file = request.files.get("media_file")
+    else:
+        data = request.get_json(silent=True) or {}
+        content = str(data.get("content", "")).strip()
+        media_url = str(data.get("media_url", "")).strip()
+        media_file = None
 
     if not content:
         return jsonify({"error": "Update content is required"}), 400
 
+    resolved_media_url = media_url or None
+    if media_file and media_file.filename:
+        filename = secure_filename(media_file.filename)
+        if not filename:
+            return jsonify({"error": "Invalid file name"}), 400
+
+        saved_path = UPLOAD_DIR / filename
+        counter = 1
+        while saved_path.exists():
+            stem = Path(filename).stem
+            suffix = Path(filename).suffix
+            saved_path = UPLOAD_DIR / f"{stem}-{counter}{suffix}"
+            counter += 1
+
+        media_file.save(saved_path)
+        resolved_media_url = f"/api/uploads/{saved_path.name}"
+
     update = BoardUpdate(
         content=content,
-        media_url=media_url or None,
+        media_url=resolved_media_url,
         board_id=board.id,
         user_id=user_id
     )
@@ -581,10 +645,20 @@ def unfollow_board(board_id):
 @api.route("/discover/boards", methods=["GET"])
 @jwt_required()
 def discover_boards():
+    user_id = int(get_jwt_identity())
     query_text = str(request.args.get("q", "")).strip()
     hobby_filter = str(request.args.get("hobby", "")).strip()
 
-    query = Board.query.filter_by(is_public=True)
+    if not query_text and not hobby_filter:
+        return jsonify({"boards": []}), 200
+
+    query = Board.query.filter_by(is_public=True).filter(Board.user_id != user_id)
+
+    followed_board_ids = [
+        row.board_id for row in BoardFollow.query.filter_by(follower_user_id=user_id).all()
+    ]
+    if followed_board_ids:
+        query = query.filter(Board.id.notin_(followed_board_ids))
 
     if query_text:
         pattern = f"%{query_text}%"

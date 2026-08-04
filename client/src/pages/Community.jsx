@@ -24,7 +24,6 @@ function Community() {
   useEffect(() => {
     fetchFeed();
     fetchFollowingBoards();
-    fetchDiscoverBoards();
   }, []);
 
   async function fetchFollowingBoards() {
@@ -269,7 +268,7 @@ function Community() {
           {discoverError && <p className="error-message">{discoverError}</p>}
 
           {!discoverLoading && !discoverError && discoverBoards.length === 0 ? (
-            <p className="empty-state">No public boards found yet. Try broadening your search terms.</p>
+            <p className="empty-state">Search by project name or hobby to discover boards worth following.</p>
           ) : (
             <div className="community-list">
               {discoverBoards.map((board) => (

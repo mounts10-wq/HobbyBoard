@@ -1,6 +1,38 @@
+function getMediaBaseUrl() {
+  const configuredBase = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000/api";
+  return configuredBase.replace(/\/api\/?$/, "");
+}
+
+function resolveMediaUrl(inputUrl) {
+  const normalized = String(inputUrl || "").trim();
+
+  if (!normalized) {
+    return "";
+  }
+
+  const token = localStorage.getItem("token");
+
+  if (normalized.startsWith("/api/")) {
+    const baseUrl = `${getMediaBaseUrl()}${normalized}`;
+    return token ? `${baseUrl}?token=${encodeURIComponent(token)}` : baseUrl;
+  }
+
+  return normalized;
+}
+
 function getYouTubeEmbedUrl(inputUrl) {
+  const normalized = String(inputUrl || "").trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.startsWith("/")) {
+    return null;
+  }
+
   try {
-    const parsed = new URL(inputUrl);
+    const parsed = new URL(normalized);
     const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
 
     if (host === "youtu.be") {
@@ -32,11 +64,13 @@ function getYouTubeEmbedUrl(inputUrl) {
 
 function detectMediaType(url) {
   const normalized = String(url || "").trim();
+  const resolvedUrl = resolveMediaUrl(normalized);
 
-  if (!normalized) {
+  if (!resolvedUrl) {
     return { type: "none" };
   }
 
+  const isRelativePath = normalized.startsWith("/");
   const imagePattern = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i;
   const videoPattern = /\.(mp4|webm|ogg|mov)(\?.*)?$/i;
 
@@ -45,15 +79,23 @@ function detectMediaType(url) {
     return { type: "youtube", embedUrl: youtubeEmbedUrl, url: normalized };
   }
 
+  if (isRelativePath && imagePattern.test(normalized)) {
+    return { type: "image", url: resolvedUrl };
+  }
+
+  if (isRelativePath && videoPattern.test(normalized)) {
+    return { type: "video", url: resolvedUrl };
+  }
+
   if (imagePattern.test(normalized)) {
-    return { type: "image", url: normalized };
+    return { type: "image", url: resolvedUrl };
   }
 
   if (videoPattern.test(normalized)) {
-    return { type: "video", url: normalized };
+    return { type: "video", url: resolvedUrl };
   }
 
-  return { type: "link", url: normalized };
+  return { type: "link", url: resolvedUrl };
 }
 
 function MediaAttachment({ url }) {
@@ -91,9 +133,6 @@ function MediaAttachment({ url }) {
         />
       )}
 
-      <p className="community-media-link">
-        Media: <a href={media.url} target="_blank" rel="noreferrer">{media.url}</a>
-      </p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ server/venv/
 __pycache__/
 *.pyc
 .env
+server/instance/
 server/instance/*.db
 server/instance/backups/
 

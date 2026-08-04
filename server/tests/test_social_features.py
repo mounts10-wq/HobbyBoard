@@ -1,4 +1,5 @@
 import sys
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -173,6 +174,7 @@ def test_update_comments_allow_viewers_on_public_board(client):
 
 def test_discover_boards_filters_public_results(client):
     owner_token, _ = _signup_and_auth(client, "maker", "maker@example.com")
+    viewer_token, _ = _signup_and_auth(client, "viewer", "viewer@example.com")
 
     public_response = client.post(
         "/api/boards",
@@ -190,7 +192,7 @@ def test_discover_boards_filters_public_results(client):
 
     discover_response = client.get(
         "/api/discover/boards?q=Wood&hobby=wood",
-        headers={"Authorization": f"Bearer {owner_token}"},
+        headers={"Authorization": f"Bearer {viewer_token}"},
     )
 
     assert discover_response.status_code == 200
@@ -198,3 +200,117 @@ def test_discover_boards_filters_public_results(client):
     assert len(boards) == 1
     assert boards[0]["title"] == "Wood Lathe Bowl"
     assert boards[0]["owner_username"] == "maker"
+
+
+def test_uploaded_media_is_only_accessible_to_owner_or_followers(client):
+    owner_token, _ = _signup_and_auth(client, "owner", "owner@example.com")
+    follower_token, _ = _signup_and_auth(client, "follower", "follower@example.com")
+    viewer_token, _ = _signup_and_auth(client, "viewer", "viewer@example.com")
+
+    create_board_response = client.post(
+        "/api/boards",
+        json={"title": "Studio Updates", "hobby_type": "Photography", "is_public": True},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    board_id = create_board_response.get_json()["board"]["id"]
+
+    upload_response = client.post(
+        f"/api/boards/{board_id}/updates",
+        data={
+            "content": "Shared a new shot",
+            "media_file": (BytesIO(b"fake-image-bytes"), "photo.png"),
+        },
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    assert upload_response.status_code == 201
+    media_url = upload_response.get_json()["update"]["media_url"]
+    filename = media_url.split("/")[-1]
+
+    owner_media_response = client.get(
+        f"/api/uploads/{filename}?token={owner_token}",
+    )
+    assert owner_media_response.status_code == 200
+
+    client.post(
+        f"/api/boards/{board_id}/follow",
+        headers={"Authorization": f"Bearer {follower_token}"},
+    )
+
+    follower_media_response = client.get(
+        f"/api/uploads/{filename}?token={follower_token}",
+    )
+    assert follower_media_response.status_code == 200
+
+    viewer_media_response = client.get(
+        f"/api/uploads/{filename}",
+        headers={"Authorization": f"Bearer {viewer_token}"},
+    )
+    assert viewer_media_response.status_code == 403
+
+
+def test_uploading_media_file_to_board_update_saves_attachment(client):
+    owner_token, _ = _signup_and_auth(client, "uploader", "uploader@example.com")
+
+    create_board_response = client.post(
+        "/api/boards",
+        json={"title": "Photo Log", "hobby_type": "Photography", "is_public": True},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    board_id = create_board_response.get_json()["board"]["id"]
+
+    response = client.post(
+        f"/api/boards/{board_id}/updates",
+        data={
+            "content": "Uploaded a new photo",
+            "media_file": (BytesIO(b"fake-image-bytes"), "photo.png"),
+        },
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+
+    assert response.status_code == 201
+    payload = response.get_json()["update"]
+    assert payload["content"] == "Uploaded a new photo"
+    assert payload["media_url"].startswith("/api/uploads/")
+
+
+def test_discover_boards_requires_search_terms_and_excludes_own_and_followed_boards(client):
+    owner_token, _ = _signup_and_auth(client, "owner", "owner@example.com")
+    viewer_token, _ = _signup_and_auth(client, "viewer", "viewer@example.com")
+    other_token, _ = _signup_and_auth(client, "other", "other@example.com")
+
+    owner_board_response = client.post(
+        "/api/boards",
+        json={"title": "My Workshop", "hobby_type": "Woodworking", "is_public": True},
+        headers={"Authorization": f"Bearer {owner_token}"},
+    )
+    owner_board_id = owner_board_response.get_json()["board"]["id"]
+
+    other_board_response = client.post(
+        "/api/boards",
+        json={"title": "Community Craft Corner", "hobby_type": "Crafts", "is_public": True},
+        headers={"Authorization": f"Bearer {other_token}"},
+    )
+    other_board_id = other_board_response.get_json()["board"]["id"]
+
+    client.post(
+        f"/api/boards/{owner_board_id}/follow",
+        headers={"Authorization": f"Bearer {viewer_token}"},
+    )
+
+    empty_response = client.get(
+        "/api/discover/boards",
+        headers={"Authorization": f"Bearer {viewer_token}"},
+    )
+    assert empty_response.status_code == 200
+    assert empty_response.get_json()["boards"] == []
+
+    discover_response = client.get(
+        "/api/discover/boards?q=craft",
+        headers={"Authorization": f"Bearer {viewer_token}"},
+    )
+
+    assert discover_response.status_code == 200
+    boards = discover_response.get_json()["boards"]
+    assert len(boards) == 1
+    assert boards[0]["id"] == other_board_id
+    assert boards[0]["title"] == "Community Craft Corner"

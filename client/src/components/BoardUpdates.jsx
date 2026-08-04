@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { apiRequest } from "../services/api";
+import { apiRequest, apiUploadRequest } from "../services/api";
 import MediaAttachment from "./MediaAttachment";
 
 function BoardUpdates({ boardId, canManage = false }) {
   const [updates, setUpdates] = useState([]);
   const [content, setContent] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaFileName, setMediaFileName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,14 +44,25 @@ function BoardUpdates({ boardId, canManage = false }) {
     setError("");
 
     try {
-      const data = await apiRequest(`/boards/${boardId}/updates`, {
-        method: "POST",
-        body: JSON.stringify({ content, media_url: mediaUrl }),
-      });
+      let data;
+
+      if (mediaFile) {
+        const formData = new FormData();
+        formData.append("content", content);
+        formData.append("media_file", mediaFile);
+
+        data = await apiUploadRequest(`/boards/${boardId}/updates`, formData);
+      } else {
+        data = await apiRequest(`/boards/${boardId}/updates`, {
+          method: "POST",
+          body: JSON.stringify({ content }),
+        });
+      }
 
       setUpdates([data.update, ...updates]);
       setContent("");
-      setMediaUrl("");
+      setMediaFile(null);
+      setMediaFileName("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -124,19 +136,22 @@ function BoardUpdates({ boardId, canManage = false }) {
     <section className="update-section">
       <div className="task-section-header">
         <h2>Project Updates</h2>
-        <span className="count-pill">Share progress</span>
       </div>
 
       {canManage ? (
       <form className="update-form" onSubmit={handleSubmit}>
         <label>
-          Optional media URL
+          Share a photo or video from your device
           <input
-            type="url"
-            value={mediaUrl}
-            onChange={(event) => setMediaUrl(event.target.value)}
-            placeholder="https://youtube.com/... or another media link"
+            type="file"
+            accept="image/*,video/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0] || null;
+              setMediaFile(file);
+              setMediaFileName(file ? file.name : "");
+            }}
           />
+          {mediaFileName ? <span className="upload-file-name">Selected: {mediaFileName}</span> : null}
         </label>
 
         <label>

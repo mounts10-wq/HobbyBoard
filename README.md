@@ -14,6 +14,7 @@ I wanted a cleaner way to manage personal projects from start to finish. HobbyBo
 - Full CRUD for boards
 - Full CRUD for tasks
 - Board updates for posting milestone progress with photo and video uploads
+- Comments on board updates for lightweight discussion
 - Board-level follows (follow one board without following all of a user's boards)
 - Pagination on board and task endpoints
 - Protected frontend routes for authenticated pages
@@ -42,7 +43,10 @@ Backend:
 - Board belongs to User
 - Board has many Tasks
 - Board has many BoardUpdates
+- BoardUpdate has many BoardUpdateComments
 - Task belongs to Board
+- User can follow many Boards (through BoardFollow)
+- User can follow many Users (through UserFollow)
 
 ## API Summary
 
@@ -77,10 +81,20 @@ Board Updates:
 - POST /api/boards/:board_id/updates
 - DELETE /api/updates/:id
 
+Assistant:
+- POST /api/assistant/plan
+
+Comments:
+- GET /api/updates/:update_id/comments
+- POST /api/updates/:update_id/comments
+
 Social:
 - GET /api/feed
 - GET /api/discover/boards
+- GET /api/me/following
 - GET /api/me/following/boards
+- POST /api/users/:target_user_id/follow
+- DELETE /api/users/:target_user_id/follow
 - POST /api/boards/:board_id/follow
 - DELETE /api/boards/:board_id/follow
 
@@ -90,6 +104,7 @@ Social:
 - /signup
 - /login
 - /dashboard (protected)
+- /community (protected)
 - /boards/:boardId (protected)
 
 ## Getting Started
@@ -194,11 +209,11 @@ These files are not meant to be committed to Git and should stay local to each m
 - If the browser shows a blank or broken media preview, confirm that the backend is still running and that the upload was created successfully.
 - To enable the AI planning assistant with a real model response, add ANTHROPIC_API_KEY to your server/.env file with your Anthropic key. Without that key, the assistant falls back to helpful local suggestions.
 - If your Anthropic account does not support the default model, set ANTHROPIC_MODEL in server/.env (example: ANTHROPIC_MODEL=claude-sonnet-5).
-- The assistant response includes a source field (anthropic or fallback), which is useful when verifying AI configuration.
+- The assistant response includes a source field (anthropic or fallback), while the UI label shows AI or Default.
 
 ## Future Improvements
 
-- Materials list on each board
+- Advanced materials management and structured checklists
 - Notes and resource links
 - More dashboard analytics
 - Team collaboration and sharing

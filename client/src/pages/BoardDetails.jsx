@@ -110,29 +110,35 @@ function BoardDetails() {
         <p>{board.description || "No description added yet."}</p>
       </div>
 
-      <section className="planning-section">
-        <div className="task-section-header">
-          <h2>Planning Notes</h2>
-          <span className="count-pill">{progressPercent}% done</span>
+      <section className="board-workspace">
+        <div className="board-workspace-primary">
+          <section className="planning-section">
+            <div className="task-section-header">
+              <h2>Planning Notes</h2>
+              <span className="count-pill">{progressPercent}% done</span>
+            </div>
+
+            <div className="planning-grid">
+              <div className="planning-card">
+                <h3>Materials</h3>
+                <p>{board.materials || "No materials listed yet."}</p>
+              </div>
+              <div className="planning-card">
+                <h3>Notes</h3>
+                <p>{board.notes || "No planning notes yet."}</p>
+              </div>
+            </div>
+
+            {canManageBoard ? <PlanningAssistant board={board} /> : null}
+          </section>
+
+          {canManageBoard ? <TaskForm onCreateTask={handleCreateTask} /> : null}
         </div>
 
-        <div className="planning-grid">
-          <div className="planning-card">
-            <h3>Materials</h3>
-            <p>{board.materials || "No materials listed yet."}</p>
-          </div>
-          <div className="planning-card">
-            <h3>Notes</h3>
-            <p>{board.notes || "No planning notes yet."}</p>
-          </div>
+        <div className="board-workspace-secondary">
+          <BoardUpdates boardId={boardId} canManage={canManageBoard} />
         </div>
-
-        {canManageBoard ? <PlanningAssistant board={board} /> : null}
       </section>
-
-      <BoardUpdates boardId={boardId} canManage={canManageBoard} />
-
-      {canManageBoard ? <TaskForm onCreateTask={handleCreateTask} /> : null}
 
       <div className="task-section">
         <div className="task-section-header">

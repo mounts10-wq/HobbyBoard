@@ -116,56 +116,62 @@ function Dashboard() {
         </div>
       </div>
 
-      <section className="insights-panel">
-        <div className="insights-header">
-          <h2>Progress Snapshot</h2>
-          {!statsLoading && (
-            <span className="count-pill">{stats.completion_rate}% complete</span>
-          )}
+      <section className="dashboard-workspace">
+        <div className="dashboard-workspace-primary">
+          <section className="insights-panel">
+            <div className="insights-header">
+              <h2>Progress Snapshot</h2>
+              {!statsLoading && (
+                <span className="count-pill">{stats.completion_rate}% complete</span>
+              )}
+            </div>
+
+            {statsLoading ? (
+              <p className="loading-message">Loading your stats...</p>
+            ) : (
+              <>
+                <div className="progress-track" role="img" aria-label="Task completion progress">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${Math.min(stats.completion_rate, 100)}%` }}
+                  />
+                </div>
+
+                <div className="stats-grid">
+                  <article className="stat-card">
+                    <p className="stat-label">Boards</p>
+                    <p className="stat-value">{stats.board_count}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">Total Tasks</p>
+                    <p className="stat-value">{stats.task_count}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">Completed</p>
+                    <p className="stat-value">{stats.completed_tasks}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">In Progress</p>
+                    <p className="stat-value">{stats.in_progress_tasks}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">Not Started</p>
+                    <p className="stat-value">{stats.not_started_tasks}</p>
+                  </article>
+                  <article className="stat-card">
+                    <p className="stat-label">High Priority</p>
+                    <p className="stat-value">{stats.high_priority_tasks}</p>
+                  </article>
+                </div>
+              </>
+            )}
+          </section>
         </div>
 
-        {statsLoading ? (
-          <p className="loading-message">Loading your stats...</p>
-        ) : (
-          <>
-            <div className="progress-track" role="img" aria-label="Task completion progress">
-              <div
-                className="progress-fill"
-                style={{ width: `${Math.min(stats.completion_rate, 100)}%` }}
-              />
-            </div>
-
-            <div className="stats-grid">
-              <article className="stat-card">
-                <p className="stat-label">Boards</p>
-                <p className="stat-value">{stats.board_count}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">Total Tasks</p>
-                <p className="stat-value">{stats.task_count}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">Completed</p>
-                <p className="stat-value">{stats.completed_tasks}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">In Progress</p>
-                <p className="stat-value">{stats.in_progress_tasks}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">Not Started</p>
-                <p className="stat-value">{stats.not_started_tasks}</p>
-              </article>
-              <article className="stat-card">
-                <p className="stat-label">High Priority</p>
-                <p className="stat-value">{stats.high_priority_tasks}</p>
-              </article>
-            </div>
-          </>
-        )}
+        <div className="dashboard-workspace-secondary">
+          <BoardForm onCreateBoard={handleCreateBoard} />
+        </div>
       </section>
-
-      <BoardForm onCreateBoard={handleCreateBoard} />
 
       {notice && <p className="success-message">{notice}</p>}
       {loading && <p className="loading-message">Loading boards...</p>}

@@ -169,6 +169,22 @@ function Dashboard() {
               </>
             )}
           </section>
+
+          <section className="dashboard-tip-panel">
+            <div className="dashboard-tip-header">
+              <div>
+                <h2>Quick Start</h2>
+                <p>A simple flow for turning ideas into a real project board.</p>
+              </div>
+              <span className="count-pill">3 steps</span>
+            </div>
+
+            <ol className="dashboard-tip-list">
+              <li>Create one board for the project you care about most.</li>
+              <li>Add a few tasks and mark the first one complete quickly.</li>
+              <li>Post an update when you hit a milestone or learn something new.</li>
+            </ol>
+          </section>
         </div>
 
         <div className="dashboard-workspace-secondary">

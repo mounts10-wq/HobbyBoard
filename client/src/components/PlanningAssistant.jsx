@@ -97,12 +97,16 @@ function PlanningAssistant({ board }) {
           <p>Turn your board details into a more realistic next-step plan.</p>
           <p className="assistant-source-row">
             <span className={`assistant-source-pill ${assistantSource === "anthropic" ? "ai" : "fallback"}`}>
-              {assistantSource === "anthropic" ? "AI" : "Fallback"}
+              {assistantSource === "anthropic" ? "AI" : "Default"}
             </span>
             {assistantSource === "anthropic"
               ? "Live AI suggestions are active."
-              : "Using built-in suggestions. Add your API key for live AI responses."}
+              : "Using default built-in suggestions."}
           </p>
+
+          {assistantSource !== "anthropic" && (
+            <p className="assistant-note">Add your API key for live AI responses.</p>
+          )}
         </div>
         <button
           type="button"

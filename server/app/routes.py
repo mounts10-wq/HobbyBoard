@@ -58,6 +58,32 @@ def build_local_plan_suggestions(title, description, materials, notes):
     return suggestions[:4]
 
 
+def parse_suggestions_from_ai_text(text):
+    cleaned_text = (text or "").strip()
+    if not cleaned_text:
+        return []
+
+    try:
+        parsed = json.loads(cleaned_text)
+        if isinstance(parsed, list):
+            suggestions = [str(item).strip() for item in parsed if str(item).strip()]
+            return suggestions[:4]
+    except Exception:
+        pass
+
+    quoted_values = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', cleaned_text)
+    if quoted_values:
+        suggestions = [item.strip() for item in quoted_values if item.strip()]
+        return suggestions[:4]
+
+    line_items = [
+        re.sub(r"^[-*\d.)\s]+", "", line).strip()
+        for line in cleaned_text.splitlines()
+        if line.strip()
+    ]
+    return line_items[:4]
+
+
 @api.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"message": "HobbyBoard API is running"}), 200
@@ -393,8 +419,7 @@ def generate_plan_suggestions():
         if not text:
             raise ValueError("No text returned from AI service")
 
-        cleaned = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', text)
-        suggestions = cleaned or [line.strip(" -\n") for line in text.splitlines() if line.strip()]
+        suggestions = parse_suggestions_from_ai_text(text)
         if not suggestions:
             raise ValueError("No suggestions parsed")
 

@@ -112,7 +112,10 @@ function Dashboard() {
       <div className="dashboard-header">
         <div>
           <h1>Your Hobby/Project Boards</h1>
-          <p>Welcome, {user?.username}. Create boards to organize your projects.</p>
+          <p>Welcome, {user?.username}. Create boards to organize your hobby/projects.</p>
+          <p className="dashboard-subcopy">
+            Use the left panel to review progress and the right panel to start a new board.
+          </p>
         </div>
       </div>
 

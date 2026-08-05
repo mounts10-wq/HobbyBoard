@@ -55,6 +55,9 @@ function TaskForm({ onCreateTask }) {
   return (
     <form onSubmit={handleSubmit} className="task-form">
       <h2>Add a Task</h2>
+      <p className="form-helper-text">
+        Keep tasks short and specific so the board feels easy to scan and update.
+      </p>
 
       <label>
         Task Title

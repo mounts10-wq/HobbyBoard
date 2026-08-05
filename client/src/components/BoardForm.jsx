@@ -59,6 +59,9 @@ function BoardForm({ onCreateBoard }) {
   return (
     <form onSubmit={handleSubmit} className="board-form">
       <h2>Create a New Hobby/Project Board</h2>
+      <p className="form-helper-text">
+        Add the essentials first. You can always refine the plan, materials, and visibility later.
+      </p>
 
       <label>
         Board Title

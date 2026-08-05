@@ -8,6 +8,9 @@ function Home() {
         HobbyBoard helps makers, builders, and hobbyists create project boards,
         track tasks, and manage progress without scattered notes.
       </p>
+      <p className="hero-note">
+        Built to feel calm, clear, and capstone-ready on desktop and mobile.
+      </p>
 
       <div className="hero-actions">
         <Link to="/signup" className="primary-button">

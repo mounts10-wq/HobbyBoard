@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, send_from_directory
+from flask import Blueprint, current_app, jsonify, request, send_from_directory
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import (
     create_access_token,
@@ -63,11 +63,27 @@ def parse_suggestions_from_ai_text(text):
     if not cleaned_text:
         return []
 
+    if cleaned_text.startswith("```"):
+        fence_match = re.match(r"^```(?:json)?\s*(.*?)\s*```$", cleaned_text, re.DOTALL)
+        if fence_match:
+            cleaned_text = fence_match.group(1).strip()
+
     try:
         parsed = json.loads(cleaned_text)
+        if isinstance(parsed, dict):
+            parsed = parsed.get("suggestions", [])
+
         if isinstance(parsed, list):
-            suggestions = [str(item).strip() for item in parsed if str(item).strip()]
-            return suggestions[:4]
+            suggestions = []
+            for item in parsed:
+                if isinstance(item, str) and item.strip():
+                    suggestions.append(item.strip())
+                elif isinstance(item, dict):
+                    candidate = str(item.get("suggestion") or item.get("text") or "").strip()
+                    if candidate:
+                        suggestions.append(candidate)
+            if suggestions:
+                return suggestions[:4]
     except Exception:
         pass
 
@@ -384,10 +400,16 @@ def generate_plan_suggestions():
 
     prompt += " Return the response as a JSON array of short strings."
 
+    # Keep automated tests stable and independent of external AI services.
+    if current_app.config.get("TESTING") and os.getenv("ENABLE_AI_IN_TESTS", "").lower() not in {"1", "true", "yes", "on"}:
+        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
+
     api_key = os.getenv("ANTHROPIC_API_KEY")
+    anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5").strip() or "claude-sonnet-5"
     if not api_key:
         fallback = build_local_plan_suggestions(title, description, materials, notes)
-        return jsonify({"suggestions": fallback}), 200
+        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
 
     try:
         import requests
@@ -400,7 +422,7 @@ def generate_plan_suggestions():
                 "content-type": "application/json",
             },
             json={
-                "model": "claude-3-5-sonnet-latest",
+                "model": anthropic_model,
                 "max_tokens": 400,
                 "messages": [{"role": "user", "content": prompt}],
             },
@@ -423,10 +445,10 @@ def generate_plan_suggestions():
         if not suggestions:
             raise ValueError("No suggestions parsed")
 
-        return jsonify({"suggestions": suggestions[:4]}), 200
+        return jsonify({"suggestions": suggestions[:4], "source": "anthropic"}), 200
     except Exception:
         fallback = build_local_plan_suggestions(title, description, materials, notes)
-        return jsonify({"suggestions": fallback}), 200
+        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
 
 
 @api.route("/boards/<int:board_id>/updates", methods=["GET"])

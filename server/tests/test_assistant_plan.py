@@ -6,6 +6,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import create_app, db
+from app.routes import parse_suggestions_from_ai_text
 
 
 @pytest.fixture
@@ -39,6 +40,43 @@ def test_assistant_plan_returns_contextual_suggestions(client):
     data = response.get_json()
     assert isinstance(data["suggestions"], list)
     assert len(data["suggestions"]) >= 3
+    assert data["source"] == "fallback"
     joined = " ".join(data["suggestions"]).lower()
     assert "pottery mug project" in joined or "pottery mug" in joined
     assert "clay" in joined and "glaze" in joined
+
+
+def test_parse_suggestions_from_code_fenced_json_dict_list():
+    text = """```json
+[
+    {"suggestion": "Start with a simple mockup."},
+    {"suggestion": "Create a materials checklist."},
+    {"suggestion": "Set a weekend milestone."}
+]
+```"""
+
+    suggestions = parse_suggestions_from_ai_text(text)
+
+    assert suggestions == [
+        "Start with a simple mockup.",
+        "Create a materials checklist.",
+        "Set a weekend milestone.",
+    ]
+
+
+def test_parse_suggestions_from_json_object_shape():
+    text = """{
+    "suggestions": [
+        "Define scope for phase one.",
+        "Estimate effort for each step.",
+        "Plan one review checkpoint."
+    ]
+}"""
+
+    suggestions = parse_suggestions_from_ai_text(text)
+
+    assert suggestions == [
+        "Define scope for phase one.",
+        "Estimate effort for each step.",
+        "Plan one review checkpoint.",
+    ]

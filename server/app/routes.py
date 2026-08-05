@@ -100,6 +100,23 @@ def parse_suggestions_from_ai_text(text):
     return line_items[:4]
 
 
+def normalize_plan_suggestions(raw_suggestions):
+    normalized = []
+
+    for item in raw_suggestions or []:
+        suggestion = re.sub(r"\s+", " ", str(item).strip())
+        suggestion = re.sub(r"^[-*\d.)\s]+", "", suggestion).strip()
+        if not suggestion:
+            continue
+
+        if suggestion[-1] not in {".", "!", "?"}:
+            suggestion = f"{suggestion}."
+
+        normalized.append(suggestion)
+
+    return normalized[:4]
+
+
 @api.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"message": "HobbyBoard API is running"}), 200
@@ -398,17 +415,22 @@ def generate_plan_suggestions():
     if notes:
         prompt += f" The planning notes are: {notes}."
 
-    prompt += " Return the response as a JSON array of short strings."
+    prompt += (
+        " Return exactly 4 concise suggestions as a JSON array of strings."
+        " Each suggestion should start with an action verb and include a concrete outcome"
+        " or a near-term timeframe. Keep each suggestion under 20 words."
+        " Do not return markdown or additional commentary."
+    )
 
     # Keep automated tests stable and independent of external AI services.
     if current_app.config.get("TESTING") and os.getenv("ENABLE_AI_IN_TESTS", "").lower() not in {"1", "true", "yes", "on"}:
-        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
         return jsonify({"suggestions": fallback, "source": "fallback"}), 200
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5").strip() or "claude-sonnet-5"
     if not api_key:
-        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
         return jsonify({"suggestions": fallback, "source": "fallback"}), 200
 
     try:
@@ -441,13 +463,13 @@ def generate_plan_suggestions():
         if not text:
             raise ValueError("No text returned from AI service")
 
-        suggestions = parse_suggestions_from_ai_text(text)
+        suggestions = normalize_plan_suggestions(parse_suggestions_from_ai_text(text))
         if not suggestions:
             raise ValueError("No suggestions parsed")
 
         return jsonify({"suggestions": suggestions[:4], "source": "anthropic"}), 200
     except Exception:
-        fallback = build_local_plan_suggestions(title, description, materials, notes)
+        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
         return jsonify({"suggestions": fallback, "source": "fallback"}), 200
 
 

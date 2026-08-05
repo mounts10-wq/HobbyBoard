@@ -58,9 +58,11 @@ function buildSuggestions(board) {
 function PlanningAssistant({ board }) {
   const [suggestions, setSuggestions] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [assistantSource, setAssistantSource] = useState("fallback");
 
   useEffect(() => {
     setSuggestions(buildSuggestions(board));
+    setAssistantSource("fallback");
   }, [board?.id, board?.title, board?.description, board?.materials, board?.notes]);
 
   async function handleGenerate() {
@@ -78,8 +80,10 @@ function PlanningAssistant({ board }) {
       });
 
       setSuggestions(data.suggestions || []);
+      setAssistantSource(data.source || "fallback");
     } catch (error) {
       setSuggestions(buildSuggestions(board));
+      setAssistantSource("fallback");
     } finally {
       setIsGenerating(false);
     }
@@ -91,6 +95,14 @@ function PlanningAssistant({ board }) {
         <div>
           <h2>Planning Assistant</h2>
           <p>Turn your board details into a more realistic next-step plan.</p>
+          <p className="assistant-source-row">
+            <span className={`assistant-source-pill ${assistantSource === "anthropic" ? "ai" : "fallback"}`}>
+              {assistantSource === "anthropic" ? "AI" : "Fallback"}
+            </span>
+            {assistantSource === "anthropic"
+              ? "Live AI suggestions are active."
+              : "Using built-in suggestions. Add your API key for live AI responses."}
+          </p>
         </div>
         <button
           type="button"

@@ -1,6 +1,6 @@
 # HobbyBoard
 
-HobbyBoard is a full-stack app I built for hobbyists who want one place to track ideas, tasks, and progress. It continues the same direction as ProjectBoard, but adds board updates so milestones can be shared and tracked over time.
+HobbyBoard is a full-stack app I built for hobbyists who want one place to track ideas, tasks, and progress, with board updates so milestones can be shared and tracked over time.
 
 ## Why I Built This
 

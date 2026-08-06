@@ -47,7 +47,7 @@ function Dashboard() {
     try {
       const data = await apiRequest("/dashboard/stats");
       setStats(data.stats);
-    } catch (err) {
+    } catch {
       setStats({
         board_count: 0,
         task_count: 0,
@@ -108,13 +108,18 @@ function Dashboard() {
   }
 
   return (
-    <section>
-      <div className="dashboard-header">
-        <div>
-          <h1>Your Hobby/Project Boards</h1>
-          <p>Welcome, {user?.username}. Create boards to organize your hobby/projects.</p>
+    <section className="dashboard-page">
+      <div className="dashboard-hero">
+        <div className="dashboard-hero-copy">
+          <p className="feature-kicker">Workspace overview</p>
+          <h1>Your boards, progress, and next moves in one place.</h1>
+          <p>
+            Welcome, {user?.username}. This view is your control room for active
+            projects, planning notes, and milestones that need to stay visible.
+          </p>
           <p className="dashboard-subcopy">
-            Use the left panel to review progress and the right panel to start a new board.
+            Review progress, create intentionally, and keep each board focused on
+            a real next step.
           </p>
         </div>
       </div>
@@ -203,16 +208,18 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="board-grid">
-        {boards.map((board) => (
-          <BoardCard
-            key={board.id}
-            board={board}
-            onDeleteBoard={handleDeleteBoard}
-            onUpdateBoard={handleUpdateBoard}
-          />
-        ))}
-      </div>
+      <section className="dashboard-board-section">
+        <div className="board-grid">
+          {boards.map((board) => (
+            <BoardCard
+              key={board.id}
+              board={board}
+              onDeleteBoard={handleDeleteBoard}
+              onUpdateBoard={handleUpdateBoard}
+            />
+          ))}
+        </div>
+      </section>
     </section>
   );
 }

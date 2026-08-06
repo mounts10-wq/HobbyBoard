@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { apiRequest } from "../services/api";
 
 function buildSuggestions(board) {
@@ -56,14 +56,29 @@ function buildSuggestions(board) {
 }
 
 function PlanningAssistant({ board }) {
-  const [suggestions, setSuggestions] = useState([]);
+  const [generatedPlan, setGeneratedPlan] = useState({
+    boardSignature: "",
+    suggestions: [],
+    source: "fallback",
+  });
   const [isGenerating, setIsGenerating] = useState(false);
-  const [assistantSource, setAssistantSource] = useState("fallback");
 
-  useEffect(() => {
-    setSuggestions(buildSuggestions(board));
-    setAssistantSource("fallback");
-  }, [board?.id, board?.title, board?.description, board?.materials, board?.notes]);
+  const boardSignature = useMemo(
+    () =>
+      JSON.stringify({
+        id: board?.id || "",
+        title: board?.title || "",
+        description: board?.description || "",
+        materials: board?.materials || "",
+        notes: board?.notes || "",
+      }),
+    [board?.id, board?.title, board?.description, board?.materials, board?.notes]
+  );
+
+  const fallbackSuggestions = useMemo(() => buildSuggestions(board), [board]);
+  const showingGenerated = generatedPlan.boardSignature === boardSignature;
+  const suggestions = showingGenerated ? generatedPlan.suggestions : fallbackSuggestions;
+  const assistantSource = showingGenerated ? generatedPlan.source : "fallback";
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -79,11 +94,17 @@ function PlanningAssistant({ board }) {
         }),
       });
 
-      setSuggestions(data.suggestions || []);
-      setAssistantSource(data.source || "fallback");
-    } catch (error) {
-      setSuggestions(buildSuggestions(board));
-      setAssistantSource("fallback");
+      setGeneratedPlan({
+        boardSignature,
+        suggestions: data.suggestions || [],
+        source: data.source || "fallback",
+      });
+    } catch {
+      setGeneratedPlan({
+        boardSignature,
+        suggestions: fallbackSuggestions,
+        source: "fallback",
+      });
     } finally {
       setIsGenerating(false);
     }

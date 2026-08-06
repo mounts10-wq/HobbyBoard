@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../services/api";
 import TaskForm from "../components/TaskForm";
@@ -17,13 +17,10 @@ function BoardDetails() {
 
   const completedCount = tasks.filter((task) => task.status === "Complete").length;
   const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const nextTask = tasks.find((task) => task.status !== "Complete");
 
 
-  useEffect(() => {
-    fetchBoard();
-  }, [boardId]);
-
-  async function fetchBoard() {
+  const fetchBoard = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -36,7 +33,13 @@ function BoardDetails() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [boardId]);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    fetchBoard();
+  }, [fetchBoard]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleCreateTask(formData) {
     const data = await apiRequest(`/boards/${boardId}/tasks`, {
@@ -101,13 +104,20 @@ function BoardDetails() {
       </Link>
 
       <div className="board-detail-header">
-        <h1>{board.title}</h1>
-        <p className="board-type">{board.hobby_type}</p>
-        <p className={board.is_public ? "visibility-pill public" : "visibility-pill private"}>
-          {board.is_public ? "Public board" : "Private board"}
-        </p>
-        <p className="update-meta">Owner: {board.owner_username || "Unknown"}</p>
-        <p>{board.description || "No description added yet."}</p>
+        <p className="feature-kicker">Board workspace</p>
+        <div className="board-detail-title-row">
+          <h1>{board.title}</h1>
+          <span className={board.is_public ? "visibility-pill public" : "visibility-pill private"}>
+            {board.is_public ? "Public board" : "Private board"}
+          </span>
+        </div>
+        <div className="board-detail-meta-row">
+          <span className="board-detail-type-pill">{board.hobby_type}</span>
+          <span className="owner-pill">Owner: {board.owner_username || "Unknown"}</span>
+          <span className="count-pill">{tasks.length} tasks</span>
+          <span className="count-pill">{progressPercent}% complete</span>
+        </div>
+        <p className="board-description">{board.description || "No description added yet."}</p>
       </div>
 
       <section className="board-workspace">
@@ -116,6 +126,15 @@ function BoardDetails() {
             <div className="task-section-header">
               <h2>Planning Notes</h2>
               <span className="count-pill">{progressPercent}% done</span>
+            </div>
+
+            <div className="next-action-card">
+              <h3>Next Action</h3>
+              <p>
+                {nextTask
+                  ? `Focus next on: ${nextTask.title}`
+                  : "Nice work. Every task is complete on this board."}
+              </p>
             </div>
 
             <div className="planning-grid">

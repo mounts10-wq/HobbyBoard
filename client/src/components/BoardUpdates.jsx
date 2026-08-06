@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiRequest, apiUploadRequest } from "../services/api";
 import MediaAttachment from "./MediaAttachment";
 
@@ -14,11 +14,7 @@ function BoardUpdates({ boardId, canManage = false }) {
   const [commentDrafts, setCommentDrafts] = useState({});
   const [commentLoadingByUpdateId, setCommentLoadingByUpdateId] = useState({});
 
-  useEffect(() => {
-    fetchUpdates();
-  }, [boardId]);
-
-  async function fetchUpdates() {
+  const fetchUpdates = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -30,7 +26,13 @@ function BoardUpdates({ boardId, canManage = false }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [boardId]);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    fetchUpdates();
+  }, [fetchUpdates]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleSubmit(event) {
     event.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../services/api";
@@ -122,7 +122,7 @@ function Community() {
     fetchDiscoverBoards();
   }
 
-  const feedView = useMemo(() => {
+  function renderFeedView() {
     if (feedLoading) {
       return <p className="loading-message">Loading community feed...</p>;
     }
@@ -182,10 +182,34 @@ function Community() {
         })}
       </div>
     );
-  }, [feedLoading, feedError, feedUpdates, followingBoardIds, user?.id]);
+  }
 
   return (
-    <section>
+    <section className="community-page">
+      <section className="community-hero">
+        <div className="community-hero-copy">
+          <p className="feature-kicker">Project-driven community</p>
+          <h1>Follow the work, not the noise.</h1>
+          <p>
+            Discover public boards, learn from real progress updates, and keep your
+            own planning connected to what other builders are actually finishing.
+          </p>
+        </div>
+
+        <div className="community-hero-panel">
+          <article className="community-summary-card">
+            <span className="hero-panel-label">Feed updates</span>
+            <strong>{feedUpdates.length}</strong>
+            <p>Recent milestones from boards you follow.</p>
+          </article>
+          <article className="community-summary-card">
+            <span className="hero-panel-label">Following boards</span>
+            <strong>{followingBoards.length}</strong>
+            <p>Projects you can jump back into quickly.</p>
+          </article>
+        </div>
+      </section>
+
       <div className="community-header">
         <h1>Community</h1>
         <p>Discover public projects, follow builders, and learn from real updates.</p>
@@ -237,9 +261,20 @@ function Community() {
       </section>
 
       {activeTab === "feed" ? (
-        feedView
+        renderFeedView()
       ) : (
         <section className="discover-panel">
+          <div className="discover-panel-intro">
+            <div>
+              <h2>Find builders worth following</h2>
+              <p>
+                Search by hobby, project type, or keywords to discover practical
+                project boards with useful updates.
+              </p>
+            </div>
+            <span className="count-pill">{discoverBoards.length} results</span>
+          </div>
+
           <form className="discover-form" onSubmit={handleSearch}>
             <label>
               Search text

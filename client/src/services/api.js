@@ -36,14 +36,16 @@ export async function apiRequest(endpoint, options = {}) {
     return data;
   } catch (error) {
     if (error instanceof Error && error.message.includes("Failed to fetch")) {
-      throw new Error("The server is unavailable. Start the backend and try again.");
+      throw new Error("The server is unavailable. Start the backend and try again.", { cause: error });
     }
 
     if (error instanceof Error) {
       throw error;
     }
 
-    throw new Error("The server is unavailable. Start the backend and try again.");
+    throw new Error("The server is unavailable. Start the backend and try again.", {
+      cause: error,
+    });
   }
 }
 
@@ -81,13 +83,15 @@ export async function apiUploadRequest(endpoint, formData, options = {}) {
     return data;
   } catch (error) {
     if (error instanceof Error && error.message.includes("Failed to fetch")) {
-      throw new Error("The server is unavailable. Start the backend and try again.");
+      throw new Error("The server is unavailable. Start the backend and try again.", { cause: error });
     }
 
     if (error instanceof Error) {
       throw error;
     }
 
-    throw new Error("The server is unavailable. Start the backend and try again.");
+    throw new Error("The server is unavailable. Start the backend and try again.", {
+      cause: error,
+    });
   }
 }

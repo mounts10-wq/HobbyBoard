@@ -141,7 +141,7 @@ function BoardUpdates({ boardId, canManage = false }) {
       {canManage ? (
       <form className="update-form" onSubmit={handleSubmit}>
         <label>
-          Share a photo or video from your device
+          Share a photo or video
           <input
             type="file"
             accept="image/*,video/*"

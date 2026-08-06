@@ -206,6 +206,7 @@ These files are not meant to be committed to Git and should stay local to each m
 - If python is mapped to Python 2, use `python3` commands exactly as shown.
 - Keep backend and frontend running in separate terminals.
 - Use Ctrl+C in each terminal to stop the servers.
+- If port 5000 is already in use, stop the old backend process before starting a new one.
 - If the browser shows a blank or broken media preview, confirm that the backend is still running and that the upload was created successfully.
 - To enable the AI planning assistant with a real model response, add ANTHROPIC_API_KEY to your server/.env file with your Anthropic key. Without that key, the assistant falls back to helpful local suggestions.
 - If your Anthropic account does not support the default model, set ANTHROPIC_MODEL in server/.env (example: ANTHROPIC_MODEL=claude-sonnet-5).

@@ -117,6 +117,13 @@ def normalize_plan_suggestions(raw_suggestions):
     return normalized[:4]
 
 
+def build_assistant_fallback_response(title, description, materials, notes):
+    suggestions = normalize_plan_suggestions(
+        build_local_plan_suggestions(title, description, materials, notes)
+    )
+    return jsonify({"suggestions": suggestions, "source": "fallback"}), 200
+
+
 @api.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"message": "HobbyBoard API is running"}), 200
@@ -424,14 +431,12 @@ def generate_plan_suggestions():
 
     # Keep automated tests stable and independent of external AI services.
     if current_app.config.get("TESTING") and os.getenv("ENABLE_AI_IN_TESTS", "").lower() not in {"1", "true", "yes", "on"}:
-        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
-        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
+        return build_assistant_fallback_response(title, description, materials, notes)
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5").strip() or "claude-sonnet-5"
     if not api_key:
-        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
-        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
+        return build_assistant_fallback_response(title, description, materials, notes)
 
     try:
         import requests
@@ -469,8 +474,7 @@ def generate_plan_suggestions():
 
         return jsonify({"suggestions": suggestions[:4], "source": "anthropic"}), 200
     except Exception:
-        fallback = normalize_plan_suggestions(build_local_plan_suggestions(title, description, materials, notes))
-        return jsonify({"suggestions": fallback, "source": "fallback"}), 200
+        return build_assistant_fallback_response(title, description, materials, notes)
 
 
 @api.route("/boards/<int:board_id>/updates", methods=["GET"])

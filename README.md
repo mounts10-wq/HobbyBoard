@@ -1,5 +1,7 @@
 # HobbyBoard
 
+#### Video Demo: https://youtu.be/M668E4DM2SY
+
 HobbyBoard is a full-stack app I built for hobbyists who want one place to track ideas, tasks, and progress, with board updates so milestones can be shared and tracked over time.
 
 ## Why I Built This
